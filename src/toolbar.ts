@@ -44,6 +44,7 @@ const ICONS = {
   zoomIn: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zm0 3.5v7m-3.5-3.5h7M16.5 16.5 21 21",
   zoomOut: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM7.5 11h7M16.5 16.5 21 21",
   fullscreen: "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5",
+  done: "M5 12.5l5 5L19 7",
   download: "M12 3v11m0 0 4-4m-4 4-4-4M5 19h14",
   share: "M9 13a3 3 0 1 1-3-3 3 3 0 0 1 3 3zm12-6a3 3 0 1 1-3-3 3 3 0 0 1 3 3zm0 12a3 3 0 1 1-3-3 3 3 0 0 1 3 3zM8.6 11.6l6.8-3.2m0 7.2-6.8-3.2",
 };
@@ -101,14 +102,22 @@ export function createToolbar(target: ToolbarTarget, buttons: ToolbarButtons = {
   if (show.share) {
     const shared = button("share", t("share"), () => {
       void target.share().then((ok) => {
-        // The only feedback a copy can give is that it happened.
-        if (!ok) return;
-        shared.classList.add("fv-btn-done");
-        shared.title = t("shared");
-        window.setTimeout(() => {
-          shared.classList.remove("fv-btn-done");
-          shared.title = t("share");
-        }, 1600);
+        // A copy leaves no trace on the page, so it has to say so itself. Silence
+        // here is indistinguishable from a button that does nothing.
+        if (ok) {
+          say(el, t("shared"));
+          const icon = shared.innerHTML;
+          shared.innerHTML = svg("done");
+          shared.classList.add("fv-btn-done");
+          window.setTimeout(() => {
+            shared.innerHTML = icon;
+            shared.classList.remove("fv-btn-done");
+          }, 1600);
+          return;
+        }
+        // Refused, which browsers do when the page is not the focused document
+        // or the origin is not secure. Offer the link to copy by hand instead.
+        say(el, t("shareFailed"), location.href);
       });
     });
     el.appendChild(shared);
@@ -129,15 +138,49 @@ export function createToolbar(target: ToolbarTarget, buttons: ToolbarButtons = {
   };
 }
 
+/**
+ * A short message above the toolbar. Announced politely, so a screen reader hears
+ * the outcome of a copy as well as a sighted reader sees it.
+ */
+function say(bar: HTMLElement, message: string, link?: string): void {
+  bar.querySelector(".fv-toast")?.remove();
+
+  const toast = document.createElement("div");
+  toast.className = "fv-toast";
+  toast.setAttribute("role", "status");
+  toast.textContent = message;
+
+  if (link !== undefined) {
+    const field = document.createElement("input");
+    field.type = "text";
+    field.readOnly = true;
+    field.value = link;
+    field.className = "fv-toast-link";
+    toast.appendChild(field);
+    bar.appendChild(toast);
+    field.focus();
+    field.select();
+    return;
+  }
+
+  bar.appendChild(toast);
+  window.setTimeout(() => toast.remove(), 1800);
+}
+
+function svg(icon: IconName): string {
+  return (
+    `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">` +
+    `<path d="${ICONS[icon]}"/></svg>`
+  );
+}
+
 function button(icon: IconName, label: string, onClick: () => void): HTMLButtonElement {
   const b = document.createElement("button");
   b.type = "button";
   b.className = `fv-btn fv-btn-${icon}`;
   b.title = label;
   b.setAttribute("aria-label", label);
-  b.innerHTML =
-    `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">` +
-    `<path d="${ICONS[icon]}"/></svg>`;
+  b.innerHTML = svg(icon);
   b.addEventListener("click", onClick);
   return b;
 }

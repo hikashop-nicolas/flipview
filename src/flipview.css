@@ -137,6 +137,43 @@
   stroke-linecap: round;
 }
 
+.fv-toast {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(92vw, 460px);
+  padding: 8px 12px;
+  border-radius: var(--fv-radius, 8px);
+  background: var(--fv-bar-bg, #1976d2);
+  color: var(--fv-bar-fg, #ffffff);
+  font-size: 13px;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.24);
+}
+
+.fv-toast-link {
+  width: 20em;
+  max-width: 52vw;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #223;
+  font: inherit;
+}
+
+.fv-btn-done svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .fv-btn-done {
   background: rgba(255, 255, 255, 0.34);
 }

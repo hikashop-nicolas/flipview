@@ -16,6 +16,7 @@ const EN = {
   download: "Download",
   share: "Copy a link to this page",
   shared: "Link copied",
+  shareFailed: "Copy this link",
 };
 
 export type Strings = typeof EN;
