@@ -11,6 +11,8 @@ export interface FlipviewOptions {
   cacheSize?: number;
   /** Treat page 1 as a standalone cover. */
   showCover?: boolean;
+  /** Make the covers rigid. Off by default: the rigid path visibly glitches. */
+  hardCovers?: boolean;
   /** Below this container width in px, 'auto' mode shows one page at a time. */
   breakpoint?: number;
   /** false hides the toolbar entirely; an object turns individual buttons off. */
@@ -39,6 +41,7 @@ const DEFAULTS = {
   flippingTime: 700,
   cacheSize: 8,
   showCover: true,
+  hardCovers: false,
   breakpoint: 700,
   toolbar: true,
   keyboard: true,
@@ -69,8 +72,11 @@ export function createFlipview(
   for (let i = 0; i < source.pageCount; i++) {
     const page = document.createElement("div");
     page.className = "fv-page";
-    // A cover and a back cover are rigid; the inner pages bend.
-    if (opt.showCover && (i === 0 || i === source.pageCount - 1)) {
+    // Rigid covers are opt-in. A hard page gets no temporary copy from the flip
+    // engine, so the one element serves both faces through the rotation and
+    // backface-visibility blanks it halfway: the first and last turn visibly jump.
+    // Soft covers bend like every other page and turn cleanly.
+    if (opt.hardCovers && (i === 0 || i === source.pageCount - 1)) {
       page.setAttribute("data-density", "hard");
     }
     const inner = document.createElement("div");
