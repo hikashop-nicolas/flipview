@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>flipview demo</title>
+<link rel="stylesheet" href="../src/flipview.css" />
+<style>
+  body { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background: #eef2f7; color: #223; }
+  header { display: flex; gap: 12px; align-items: center; padding: 12px 18px; background: #1976d2; color: #fff; }
+  header h1 { font-size: 17px; margin: 0 12px 0 0; font-weight: 700; }
+  header button, header label { background: rgba(255,255,255,.16); color: #fff; border: 0; border-radius: 6px; padding: 7px 13px; font: inherit; font-weight: 600; cursor: pointer; }
+  header button:hover, header label:hover { background: rgba(255,255,255,.28); }
+  #status { margin-left: auto; font-size: 13px; opacity: .9; }
+  #stage { padding: 24px 16px; }
+  input[type=file] { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>flipview</h1>
+  <button id="prev">Previous</button>
+  <button id="next">Next</button>
+  <label for="file">Open a PDF</label>
+  <input id="file" type="file" accept="application/pdf,image/*" multiple />
+  <span id="status">loading...</span>
+</header>
+<div id="stage"></div>
+<script type="module" src="./demo.ts"></script>
+</body>
+</html>

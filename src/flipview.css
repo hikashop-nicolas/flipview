@@ -1,0 +1,52 @@
+.fv-root {
+  --fv-page-bg: #ffffff;
+  --fv-page-fg: #9aa4b1;
+  --fv-book-shadow: rgba(0, 0, 0, 0.28);
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.fv-book {
+  touch-action: pan-y;
+}
+
+.fv-page {
+  background: var(--fv-page-bg);
+  overflow: hidden;
+}
+
+.fv-page[data-density="hard"] {
+  background: #f3f5f8;
+}
+
+.fv-page-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fv-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Placeholder page number, hidden as soon as the page has been painted. */
+.fv-page-number {
+  position: absolute;
+  font: 600 14px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--fv-page-fg);
+}
+
+.fv-rendered .fv-page-number {
+  display: none;
+}
+
+.stf__parent {
+  margin: 0 auto;
+}
