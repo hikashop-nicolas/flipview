@@ -28,6 +28,7 @@ declare module "page-flip/dist/js/page-flip.module.js" {
     updateFromHtml(items: NodeListOf<Element> | HTMLElement[]): void;
     turnToPage(page: number): void;
     update(): void;
+    getSettings(): PageFlipSettings;
     flipNext(): void;
     flipPrev(): void;
     getCurrentPageIndex(): number;

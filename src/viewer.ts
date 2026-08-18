@@ -11,9 +11,7 @@ export interface FlipviewOptions {
   flippingTime?: number;
   /** How many rendered page canvases to keep in memory. */
   cacheSize?: number;
-  /** Stand page 1 alone as a cover. Off by default: it makes the first and last
-   *  spreads hold a single page while the book rect still spans both halves, so
-   *  those two turns behave differently from every other one. */
+  /** Stand page 1 alone as a cover. */
   showCover?: boolean;
   /** Make the covers rigid. Off by default: the rigid path visibly glitches. */
   hardCovers?: boolean;
@@ -55,7 +53,7 @@ const DEFAULTS = {
   mode: "auto",
   flippingTime: 700,
   cacheSize: 8,
-  showCover: false,
+  showCover: true,
   hardCovers: false,
   breakpoint: 700,
   pageCorners: true,
@@ -67,6 +65,15 @@ const DEFAULTS = {
 
 /** Re-render pages only once the book has grown by more than this, to avoid churn. */
 const RERENDER_RATIO = 1.25;
+
+/**
+ * The engine picks portrait when its block is narrower than minWidth * 2. Since the
+ * block is sized to the book, that test would depend on the page size rather than on
+ * the container, so minWidth is driven to one extreme or the other and the decision
+ * stays here, where it can be made on the container width.
+ */
+const PORTRAIT_MIN = 1e6;
+const LANDSCAPE_MIN = 1;
 
 export function createFlipview(
   container: HTMLElement,
@@ -108,20 +115,15 @@ export function createFlipview(
     shells.push(page);
   }
 
-  // Stretch mode goes portrait as soon as the block is narrower than minWidth * 2,
-  // so the single-page breakpoint is expressed there rather than by rebuilding.
-  const minWidth =
-    opt.mode === "single" ? 10000 : opt.mode === "double" ? 180 : Math.round(opt.breakpoint / 2);
-
-  const startPortrait = opt.mode !== "double" && (stage.clientWidth || 800) < opt.breakpoint;
+  const startPortrait = wantPortrait();
   const start = fit(startPortrait);
-  book.style.height = `${start.height}px`;
+  size(startPortrait, start);
 
   const flip = new PageFlip(book, {
     width: start.width,
     height: start.height,
     size: "stretch",
-    minWidth,
+    minWidth: startPortrait ? PORTRAIT_MIN : LANDSCAPE_MIN,
     maxWidth: 2000,
     minHeight: 240,
     maxHeight: 2600,
@@ -228,14 +230,35 @@ export function createFlipview(
     return { width, height };
   }
 
+  /** One page per spread on a narrow container, or whenever the caller asked for it. */
+  function wantPortrait(): boolean {
+    if (opt.mode === "double") return false;
+    if (opt.mode === "single") return true;
+    return (stage.clientWidth || 800) < opt.breakpoint;
+  }
+
+  /**
+   * Sizes the book element to exactly the book. The hard-page path positions a
+   * left-hand page at x=0 of its block instead of at the book's left edge, so any
+   * leftover width in the block pushes the two halves apart and leaves a gap down
+   * the middle. Making the block exactly as wide as the spread removes the margin,
+   * and with it the gap.
+   */
+  function size(portrait: boolean, box: { width: number; height: number }): void {
+    book.style.width = `${portrait ? box.width : box.width * 2}px`;
+    book.style.height = `${box.height}px`;
+  }
+
   function relayout(): void {
     if (!settled) {
       pendingLayout = true;
       return;
     }
     pendingLayout = false;
-    const next = fit(flip.getOrientation() === "portrait");
-    book.style.height = `${next.height}px`;
+    const portrait = wantPortrait();
+    const next = fit(portrait);
+    size(portrait, next);
+    flip.getSettings().minWidth = portrait ? PORTRAIT_MIN : LANDSCAPE_MIN;
     flip.update();
     zoom?.refresh();
     if (next.width > renderWidth * RERENDER_RATIO) {

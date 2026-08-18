@@ -6,6 +6,7 @@ import type { FlipviewHandle, PageSource } from "../src/index";
 const stage = document.getElementById("stage")!;
 const status = document.getElementById("status")!;
 const cover = document.getElementById("cover") as HTMLInputElement;
+cover.checked = true;
 const hard = document.getElementById("hard") as HTMLInputElement;
 const slow = document.getElementById("slow") as HTMLInputElement;
 
