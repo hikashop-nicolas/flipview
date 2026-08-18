@@ -1,4 +1,5 @@
 import workerSrc from "pdfjs-dist/build/pdf.worker.mjs?url";
+import "../src/flipview.css";
 import { createFlipview, createPdfSource, createImageSource } from "../src/index";
 import type { FlipviewHandle } from "../src/index";
 
@@ -18,9 +19,6 @@ async function open(load: () => Promise<Awaited<ReturnType<typeof createPdfSourc
   // Test hook: the e2e suite and manual debugging drive the book through this.
   (window as unknown as { flipview: unknown }).flipview = book;
 }
-
-document.getElementById("next")!.addEventListener("click", () => book?.next());
-document.getElementById("prev")!.addEventListener("click", () => book?.prev());
 
 document.getElementById("file")!.addEventListener("change", (e) => {
   const files = Array.from((e.target as HTMLInputElement).files ?? []);

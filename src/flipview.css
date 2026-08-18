@@ -1,10 +1,33 @@
+/* Everything themeable is a custom property on .fv-root, so a host restyles the
+   viewer without overriding rules. */
 .fv-root {
   --fv-page-bg: #ffffff;
   --fv-page-fg: #9aa4b1;
-  --fv-book-shadow: rgba(0, 0, 0, 0.28);
+  --fv-cover-bg: #f3f5f8;
+  --fv-bar-bg: #1976d2;
+  --fv-bar-fg: #ffffff;
+  --fv-bar-hover: rgba(255, 255, 255, 0.22);
+  --fv-bar-height: 44px;
+  --fv-radius: 8px;
+  --fv-gap: 12px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--fv-gap);
+  width: 100%;
+}
+
+.fv-stage {
   display: flex;
   justify-content: center;
   width: 100%;
+  outline: none;
+}
+
+.fv-stage:focus-visible {
+  outline: 2px solid var(--fv-bar-bg);
+  outline-offset: 4px;
 }
 
 .fv-book {
@@ -17,7 +40,7 @@
 }
 
 .fv-page[data-density="hard"] {
-  background: #f3f5f8;
+  background: var(--fv-cover-bg);
 }
 
 .fv-page-inner {
@@ -49,4 +72,89 @@
 
 .stf__parent {
   margin: 0 auto;
+}
+
+/* --- toolbar ---
+   StPageFlip's wrapper is taller than the book itself, so without a stacking
+   context of its own the toolbar sits under it and never receives a click. */
+.fv-toolbar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: var(--fv-bar-height);
+  padding: 0 6px;
+  border-radius: var(--fv-radius);
+  background: var(--fv-bar-bg);
+  color: var(--fv-bar-fg);
+  font: 500 14px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.fv-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.fv-btn:hover,
+.fv-btn:focus-visible {
+  background: var(--fv-bar-hover);
+}
+
+.fv-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+/* The zoom and fullscreen glyphs are strokes, not filled shapes. */
+.fv-btn-fullscreen svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.fv-toolbar-spacer {
+  width: 10px;
+}
+
+.fv-toolbar-pages {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 6px;
+}
+
+.fv-page-input {
+  width: 3.2em;
+  height: 26px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--fv-bar-hover);
+  color: inherit;
+  font: inherit;
+  text-align: center;
+}
+
+.fv-page-total {
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.fv-root:fullscreen,
+.fv-root.fv-fullscreen {
+  justify-content: center;
+  padding: var(--fv-gap);
+  background: #2b3138;
 }

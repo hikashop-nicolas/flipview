@@ -1,5 +1,6 @@
 import { PageFlip } from "page-flip/dist/js/page-flip.module.js";
 import type { PageSource } from "./source";
+import { createToolbar, type ToolbarButtons } from "./toolbar";
 
 export interface FlipviewOptions {
   /** 'auto' turns into a single-page book on narrow screens. */
@@ -12,6 +13,10 @@ export interface FlipviewOptions {
   showCover?: boolean;
   /** Below this container width in px, 'auto' mode shows one page at a time. */
   breakpoint?: number;
+  /** false hides the toolbar entirely; an object turns individual buttons off. */
+  toolbar?: boolean | ToolbarButtons;
+  /** Arrow keys, Home and End drive the book when it has focus. */
+  keyboard?: boolean;
   onReady?: (handle: FlipviewHandle) => void;
   onPageChange?: (index: number) => void;
 }
@@ -20,6 +25,9 @@ export interface FlipviewHandle {
   goTo(index: number): void;
   next(): void;
   prev(): void;
+  first(): void;
+  last(): void;
+  toggleFullscreen(): void;
   readonly pageCount: number;
   currentPage(): number;
   orientation(): "portrait" | "landscape";
@@ -32,6 +40,8 @@ const DEFAULTS = {
   cacheSize: 8,
   showCover: true,
   breakpoint: 700,
+  toolbar: true,
+  keyboard: true,
 } as const;
 
 /** Re-render pages only once the book has grown by more than this, to avoid churn. */
@@ -46,9 +56,12 @@ export function createFlipview(
 
   const root = document.createElement("div");
   root.className = "fv-root";
+  const stage = document.createElement("div");
+  stage.className = "fv-stage";
   const book = document.createElement("div");
   book.className = "fv-book";
-  root.appendChild(book);
+  stage.appendChild(book);
+  root.appendChild(stage);
   container.appendChild(root);
 
   // Page shells go in first and stay; only their canvases come and go.
@@ -76,7 +89,7 @@ export function createFlipview(
   const minWidth =
     opt.mode === "single" ? 10000 : opt.mode === "double" ? 180 : Math.round(opt.breakpoint / 2);
 
-  const startPortrait = opt.mode !== "double" && (container.clientWidth || 800) < opt.breakpoint;
+  const startPortrait = opt.mode !== "double" && (stage.clientWidth || 800) < opt.breakpoint;
   const start = fit(startPortrait);
   book.style.height = `${start.height}px`;
 
@@ -156,9 +169,10 @@ export function createFlipview(
 
   /** Size one page for the given orientation, keeping the spread inside the viewport. */
   function fit(portrait: boolean): { width: number; height: number } {
-    const available = container.clientWidth || 800;
-    const top = container.getBoundingClientRect().top;
-    const maxHeight = Math.max(320, window.innerHeight - Math.max(top, 0) - 24);
+    const available = stage.clientWidth || 800;
+    const top = stage.getBoundingClientRect().top;
+    const chrome = (root.querySelector(".fv-toolbar")?.clientHeight ?? 0) + 24;
+    const maxHeight = Math.max(320, window.innerHeight - Math.max(top, 0) - chrome);
     let width = portrait ? available : Math.floor(available / 2);
     let height = Math.round(width / source.aspect);
     if (height > maxHeight) {
@@ -180,10 +194,15 @@ export function createFlipview(
     }
   }
 
+  function announce(index: number): void {
+    bar?.update(index);
+    options.onPageChange?.(index);
+  }
+
   flip.on("flip", (e) => {
     const index = Number((e as { data: number }).data);
     ensureWindow(index);
-    options.onPageChange?.(index);
+    announce(index);
   });
   flip.on("changeOrientation", () => relayout());
 
@@ -200,20 +219,61 @@ export function createFlipview(
     goTo(index) {
       flip.turnToPage(index);
       ensureWindow(index);
+      announce(index);
     },
     next: () => flip.flipNext(),
     prev: () => flip.flipPrev(),
+    first: () => handle.goTo(0),
+    last: () => handle.goTo(source.pageCount - 1),
+    toggleFullscreen() {
+      if (document.fullscreenElement === root) void document.exitFullscreen();
+      else void root.requestFullscreen?.();
+    },
     pageCount: source.pageCount,
     currentPage: () => flip.getCurrentPageIndex(),
     orientation: () => flip.getOrientation(),
     destroy() {
       observer.disconnect();
+      document.removeEventListener("fullscreenchange", onFullscreen);
       cancelAnimationFrame(frame);
       flip.destroy();
       source.destroy();
       root.remove();
     },
   };
+
+  const bar = opt.toolbar
+    ? createToolbar(handle, opt.toolbar === true ? {} : opt.toolbar)
+    : null;
+  if (bar) root.appendChild(bar.el);
+  bar?.update(0);
+
+  function onFullscreen(): void {
+    root.classList.toggle("fv-fullscreen", document.fullscreenElement === root);
+    relayout();
+  }
+  document.addEventListener("fullscreenchange", onFullscreen);
+
+  if (opt.keyboard) {
+    stage.tabIndex = 0;
+    stage.addEventListener("keydown", (e) => {
+      const rtlAware = { ArrowLeft: handle.prev, ArrowRight: handle.next };
+      const action =
+        e.key in rtlAware
+          ? rtlAware[e.key as keyof typeof rtlAware]
+          : e.key === "Home"
+            ? handle.first
+            : e.key === "End"
+              ? handle.last
+              : null;
+      if (!action) return;
+      e.preventDefault();
+      action();
+    });
+  }
+
+  // The toolbar was not in the DOM when the first size was computed.
+  relayout();
 
   options.onReady?.(handle);
   return handle;
