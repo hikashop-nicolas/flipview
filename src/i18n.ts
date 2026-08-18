@@ -12,6 +12,7 @@ const EN = {
   zoomReset: "Reset zoom",
   fullscreen: "Fullscreen",
   exitFullscreen: "Exit fullscreen",
+  close: "Close",
 };
 
 export type Strings = typeof EN;

@@ -1,6 +1,6 @@
 import workerSrc from "pdfjs-dist/build/pdf.worker.mjs?url";
 import "../src/flipview.css";
-import { createFlipview, createPdfSource, createImageSource } from "../src/index";
+import { createFlipview, createPdfSource, createImageSource, openLightbox } from "../src/index";
 import type { FlipviewHandle, PageSource } from "../src/index";
 
 const stage = document.getElementById("stage")!;
@@ -40,6 +40,11 @@ async function open(next?: () => Promise<PageSource>, startAt = 0) {
 for (const box of [cover, hard, rtl, slow]) {
   box.addEventListener("change", () => void open(undefined, book?.currentPage() ?? 0));
 }
+
+document.getElementById("light")!.addEventListener("click", () => {
+  if (!load) return;
+  openLightbox(load(), { deepLink: false, rtl: rtl.checked });
+});
 
 document.getElementById("file")!.addEventListener("change", (e) => {
   const files = Array.from((e.target as HTMLInputElement).files ?? []);

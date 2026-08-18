@@ -23,6 +23,15 @@ book.goTo(6);
 book.destroy();
 ```
 
+Or over the page, in its own overlay:
+
+```ts
+import { openLightbox } from "flipview";
+
+const light = openLightbox(createPdfSource({ url: "/catalogue.pdf", workerSrc }));
+// light.book resolves once the document has loaded; light.close() dismisses it
+```
+
 ## How it works
 
 - **pdf.js** renders each page to a canvas, on demand. Only a small window of pages
