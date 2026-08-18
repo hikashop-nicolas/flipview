@@ -1,4 +1,7 @@
-import { PageFlip } from "page-flip/dist/js/page-flip.module.js";
+import { PageFlip } from "./engine/PageFlip";
+// A const enum: the value cannot be imported through a per-file transpile, so the
+// literal is used directly and only the type is pulled in.
+import type { SizeType } from "./engine/Settings";
 import type { PageSource } from "./source";
 import { createToolbar, type ToolbarButtons } from "./toolbar";
 import { createZoom, type ZoomOptions } from "./zoom";
@@ -122,7 +125,7 @@ export function createFlipview(
   const flip = new PageFlip(book, {
     width: start.width,
     height: start.height,
-    size: "stretch",
+    size: "stretch" as SizeType,
     minWidth: startPortrait ? PORTRAIT_MIN : LANDSCAPE_MIN,
     maxWidth: 2000,
     minHeight: 240,

@@ -26,14 +26,13 @@
     "test": "vitest run",
     "prepare": "npm run build"
   },
-  "dependencies": {
-    "page-flip": "^2.0.7"
-  },
   "peerDependencies": {
     "pdfjs-dist": ">=4"
   },
   "peerDependenciesMeta": {
-    "pdfjs-dist": { "optional": true }
+    "pdfjs-dist": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "pdfjs-dist": "^5.4.149",
