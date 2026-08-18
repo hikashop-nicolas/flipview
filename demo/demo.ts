@@ -1,4 +1,5 @@
 import workerSrc from "pdfjs-dist/build/pdf.worker.mjs?url";
+import "../src/engine/Style/stPageFlip.css";
 import "../src/flipview.css";
 import { createFlipview, createPdfSource, createImageSource, openLightbox } from "../src/index";
 import type { FlipviewHandle, PageSource } from "../src/index";

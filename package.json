@@ -1,6 +1,6 @@
 {
   "name": "flipview",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Standalone client-side page-flip book viewer for PDFs and images: renders a document as a real turning-page book in the browser, no server, no upload.",
   "type": "module",
   "license": "MIT",
@@ -18,7 +18,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json && cp src/flipview.css dist/flipview.css",
+    "build": "tsc -p tsconfig.json && node build/css.mjs",
     "build:demo": "vite build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "dev": "vite",
