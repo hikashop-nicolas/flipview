@@ -39,8 +39,8 @@ const light = openLightbox(createPdfSource({ url: "/catalogue.pdf", workerSrc })
 - **pdf.js** renders each page to a canvas, on demand. Only a small window of pages
   around the current one is ever painted, and a small LRU drops the rest, so a
   300-page PDF costs about the same memory as a 10-page one.
-The library ships no audio: with no `soundUrl` the turn is synthesised, and with
-one it plays yours. Nothing to license, and nothing extra to download.
+The library ships no audio. Give it `soundUrl` and it plays yours, picking between
+several at random; give it none and pages turn silently.
 
 - **StPageFlip** (MIT) drives the fold geometry and the drag interaction. It is
   vendored in `src/engine` rather than depended on, because upstream stopped in
@@ -66,8 +66,8 @@ sources need nothing.
 | `pageCorners` | `true` | lift the page corner under the pointer |
 | `deepLink` | `false` | track the page in the URL hash, `true` uses `#page=N` |
 | `rtl` | `false` | right-to-left reading, spine and page order swap sides |
-| `sound` | `false` | page-turn sound. A number sets the volume |
-| `soundUrl` | none | recordings to use instead of the synthesised turn, one string or several |
+| `soundUrl` | none | page-turn recordings, one or several. Supplying them turns the sound on |
+| `soundVolume` | `0.35` | how loud the page turn is |
 | `downloadUrl` | none | offer the original document for download from this URL |
 | `share` | `false` | a button that copies a link to the current page, needs `deepLink` |
 | `toolbar` | `true` | `false` hides it, an object turns single buttons off |

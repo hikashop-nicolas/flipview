@@ -35,10 +35,10 @@ export interface FlipviewOptions {
   deepLink?: boolean | string;
   /** Right-to-left reading: the spine and the page order swap sides. */
   rtl?: boolean;
-  /** Play a page-turn sound. A number sets the volume, 0 to 1. */
-  sound?: boolean | number;
-  /** Recordings to use instead of the synthesised turn, picked between at random. */
+  /** Page-turn recordings, one or several. Supplying them turns the sound on. */
   soundUrl?: string | string[];
+  /** How loud the page turn is, 0 to 1. */
+  soundVolume?: number;
   /** Offer the original document for download, from this URL. */
   downloadUrl?: string;
   /** Offer a button that copies a link to the current page. Needs deepLink. */
@@ -82,7 +82,7 @@ const DEFAULTS = {
   zoom: true,
   deepLink: false,
   rtl: false,
-  sound: false,
+  soundVolume: 0.35,
   share: false,
 } as const;
 
@@ -307,12 +307,8 @@ export function createFlipview(
     options.onPageChange?.(index);
   }
 
-  const sound: FlipSound | null = opt.sound
-    ? createFlipSound(
-        typeof opt.sound === "number" ? opt.sound : undefined,
-        opt.soundUrl === undefined ? [] : [opt.soundUrl].flat(),
-      )
-    : null;
+  const sounds = opt.soundUrl === undefined ? [] : [opt.soundUrl].flat();
+  const sound: FlipSound | null = sounds.length > 0 ? createFlipSound(sounds, opt.soundVolume) : null;
 
   flip.on("flip", (e) => {
     const index = Number((e as { data: number }).data);

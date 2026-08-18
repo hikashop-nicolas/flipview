@@ -28,7 +28,7 @@ async function open(next?: () => Promise<PageSource>, startAt = 0) {
     showCover: cover.checked,
     hardCovers: hard.checked,
     rtl: rtl.checked,
-    sound: sound.checked,
+    soundUrl: sound.checked ? ["./page-turn-1.mp3", "./page-turn-2.mp3"] : undefined,
     share: true,
     downloadUrl: "./sample.pdf",
     flippingTime: slow.checked ? 3000 : 700,

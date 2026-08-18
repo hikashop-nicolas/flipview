@@ -32,3 +32,11 @@ is the full list.
 | Compiles under strictNullChecks | ours |
 | `const enum` to `enum`, type-only imports | ours, needed to consume it as source |
 | Unit tests for the geometry helpers | ours |
+
+## Demo audio
+
+The two page-turn recordings in `demo/public` are from Pixabay, under the Pixabay
+Content License, and are used by the demo only. The library itself ships no audio.
+
+- https://pixabay.com/sound-effects/film-special-effects-turnpage-99756/
+- https://pixabay.com/sound-effects/film-special-effects-book-page-45210/

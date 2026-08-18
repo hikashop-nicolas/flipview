@@ -1,6 +1,6 @@
 {
   "name": "flipview",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Standalone client-side page-flip book viewer for PDFs and images: renders a document as a real turning-page book in the browser, no server, no upload.",
   "type": "module",
   "license": "MIT",
