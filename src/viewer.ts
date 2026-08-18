@@ -7,6 +7,7 @@ import { t } from "./i18n";
 import { createToolbar, type ToolbarButtons } from "./toolbar";
 import { createZoom, type ZoomOptions } from "./zoom";
 import { createDeepLink } from "./deeplink";
+import { createSearch, highlight, type SearchHit } from "./search";
 import { createFlipSound, type FlipSound } from "./sound";
 
 export interface FlipviewOptions {
@@ -35,6 +36,8 @@ export interface FlipviewOptions {
   keyboard?: boolean;
   /** Lay the page's own text over each page, where the source has it. */
   textLayer?: boolean;
+  /** Offer a search box. Needs a source that can give up its words. */
+  search?: boolean;
   /** false disables zooming; an object tunes the min, max and step. */
   zoom?: boolean | ZoomOptions;
   /** Track the page in the URL hash. true uses #page=N, a string names the parameter. */
@@ -61,6 +64,10 @@ export interface FlipviewHandle {
   prev(): void;
   first(): void;
   last(): void;
+  /** Searches the document and returns a short tally for a reader. */
+  search(query: string): Promise<string>;
+  /** Moves to the next page holding the current query, wrapping at the end. */
+  searchNext(): void;
   zoomIn(): void;
   zoomOut(): void;
   zoomReset(): void;
@@ -86,6 +93,7 @@ const DEFAULTS = {
   toolbar: true,
   keyboard: true,
   textLayer: true,
+  search: true,
   zoom: true,
   deepLink: false,
   rtl: false,
@@ -221,6 +229,9 @@ export function createFlipview(
         // picture is stretched to fill the page and the text has to match it.
         await source.text(index, layer, shells[index].clientWidth || width).catch(() => layer.remove());
       }
+
+      // A page painted while a search is running arrives already marked.
+      if (finder.query()) highlight(shells[index], finder.query());
 
       shells[index].classList.add("fv-rendered");
       rendered.push(index);
@@ -365,6 +376,10 @@ export function createFlipview(
     options.onPageChange?.(index);
   }
 
+  const finder = createSearch(source);
+  let hits: SearchHit[] = [];
+  let at = -1;
+
   const sounds = opt.soundUrl === undefined ? [] : [opt.soundUrl].flat();
   const sound: FlipSound | null = sounds.length > 0 ? createFlipSound(sounds, opt.soundVolume) : null;
 
@@ -411,6 +426,25 @@ export function createFlipview(
     prev: () => flip.flipPrev(),
     first: () => handle.goTo(0),
     last: () => handle.goTo(source.pageCount - 1),
+    async search(query) {
+      hits = await finder.find(query);
+      at = -1;
+
+      for (const index of rendered) highlight(shells[index], finder.query());
+
+      if (finder.query().length < 2) return "";
+      if (hits.length === 0) return t("searchNone");
+
+      handle.searchNext();
+
+      // One page is a page, not one pages.
+      return t(hits.length === 1 ? "searchHit" : "searchHits", { count: hits.length });
+    },
+    searchNext() {
+      if (hits.length === 0) return;
+      at = (at + 1) % hits.length;
+      handle.goTo(hits[at].page);
+    },
     download() {
       if (!opt.downloadUrl) return;
       const link = document.createElement("a");
@@ -446,6 +480,7 @@ export function createFlipview(
       cancelAnimationFrame(frame);
       zoom?.destroy();
       link?.destroy();
+      finder.destroy();
       sound?.destroy();
       flip.destroy();
       source.destroy();
@@ -465,6 +500,7 @@ export function createFlipview(
     ? createToolbar(handle, {
         zoom: !!opt.zoom,
         download: !!opt.downloadUrl,
+        search: !!opt.search && typeof source.words === "function",
         share: !!opt.share && !!opt.deepLink,
         ...buttons,
       })

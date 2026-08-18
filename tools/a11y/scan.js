@@ -86,6 +86,9 @@ async function scanState(browser, state, port) {
 				// A real click, so the browser grants what a gesture unlocks.
 				await tab.click(step.click);
 			}
+			if (step.type) {
+				await tab.keyboard.type(step.type, { delay: 20 });
+			}
 			if (step.wait) {
 				await new Promise((r) => setTimeout(r, step.wait));
 			}

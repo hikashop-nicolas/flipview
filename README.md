@@ -77,6 +77,7 @@ sources need nothing.
 | `zoom` | `true` | `false` disables it, an object tunes min, max and step |
 | `keyboard` | `true` | arrow keys, Home and End when the stage has focus |
 | `textLayer` | `true` | lay the page's own text over each page, where the source has it |
+| `search` | `true` | offer a search box, where the source can give up its words |
 
 ## Development
 

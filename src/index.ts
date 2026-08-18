@@ -6,7 +6,8 @@
 // - zoom.ts     scale and pan, and the gesture split with the flip engine
 // - deeplink.ts the page number in the URL hash
 // - lightbox.ts the overlay presentation
-// - sound.ts    the synthesised page-turn sound
+// - sound.ts    the page-turn recordings
+// - search.ts   finding words, and marking them on a page
 // - i18n.ts     every user-visible string
 export { createFlipview, type FlipviewOptions, type FlipviewHandle } from "./viewer";
 export {
@@ -20,4 +21,5 @@ export { type ZoomOptions, type ZoomHandle } from "./zoom";
 export { createDeepLink, type DeepLink } from "./deeplink";
 export { openLightbox, type LightboxOptions, type LightboxHandle } from "./lightbox";
 export { createFlipSound, type FlipSound } from "./sound";
+export { createSearch, highlight, type SearchHandle, type SearchHit } from "./search";
 export { setStrings, t, type Strings } from "./i18n";

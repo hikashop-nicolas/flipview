@@ -239,6 +239,29 @@
   stroke-linejoin: round;
 }
 
+/* A hit, marked on the transparent text: the box is the whole point. */
+.fv-text-layer span.fv-hit {
+  background: rgba(255, 214, 0, 0.45);
+  border-radius: 2px;
+}
+
+.fv-search {
+  width: 9em;
+  height: 26px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--fv-field-bg, rgba(255, 255, 255, 0.94));
+  color: var(--fv-field-fg, #1b2733);
+  font: inherit;
+}
+
+.fv-search-count {
+  padding: 0 4px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .fv-toolbar-spacer {
   width: 10px;
 }

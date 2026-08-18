@@ -12,6 +12,8 @@ export interface ToolbarTarget {
   toggleFullscreen(): void;
   download(): void;
   share(): Promise<boolean>;
+  search(query: string): Promise<string>;
+  searchNext(): void;
   pageCount: number;
 }
 
@@ -19,6 +21,7 @@ export interface ToolbarButtons {
   nav?: boolean;
   ends?: boolean;
   pageInput?: boolean;
+  search?: boolean;
   zoom?: boolean;
   fullscreen?: boolean;
   download?: boolean;
@@ -29,6 +32,7 @@ const ALL: Required<ToolbarButtons> = {
   nav: true,
   ends: true,
   pageInput: true,
+  search: false,
   zoom: true,
   fullscreen: true,
   download: false,
@@ -46,6 +50,7 @@ const ICONS = {
   fullscreen: "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5",
   done: "M5 12.5l5 5L19 7",
   download: "M12 3v11m0 0 4-4m-4 4-4-4M5 19h14",
+  search: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM16.5 16.5 21 21",
   share: "M9 13a3 3 0 1 1-3-3 3 3 0 0 1 3 3zm12-6a3 3 0 1 1-3-3 3 3 0 0 1 3 3zm0 12a3 3 0 1 1-3-3 3 3 0 0 1 3 3zM8.6 11.6l6.8-3.2m0 7.2-6.8-3.2",
 };
 
@@ -88,6 +93,37 @@ export function createToolbar(target: ToolbarTarget, buttons: ToolbarButtons = {
 
   if (show.nav) el.appendChild(button("next", t("next"), () => target.next()));
   if (show.ends) el.appendChild(button("last", t("last"), () => target.last()));
+
+  if (show.search) {
+    el.appendChild(spacer());
+
+    const field = document.createElement("input");
+    field.type = "search";
+    field.className = "fv-search";
+    field.placeholder = t("searchIn");
+    field.setAttribute("aria-label", t("search"));
+
+    const count = document.createElement("span");
+    count.className = "fv-search-count";
+    // Politely: a reader typing should hear the tally when they pause, not on
+    // every keystroke.
+    count.setAttribute("role", "status");
+
+    let running = 0;
+    field.addEventListener("input", () => {
+      const mine = ++running;
+      void target.search(field.value).then((said) => {
+        if (mine === running) count.textContent = said;
+      });
+    });
+    field.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      target.searchNext();
+    });
+
+    el.append(field, count);
+  }
 
   if (show.zoom) {
     el.appendChild(spacer());
