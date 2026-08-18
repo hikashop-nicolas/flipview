@@ -75,6 +75,8 @@ export abstract class Render {
     protected direction: FlipDirection | null = null;
     /** Current book orientation */
     protected orientation: Orientation | null = null;
+    /** Current reading direction */
+    protected rtl: boolean | null = null;
     /** Сurrent state of the shadows */
     protected shadow: Shadow | null = null;
     /** Сurrent animation process */
@@ -210,10 +212,16 @@ export abstract class Render {
     public update(): void {
         this.boundsRect = null;
         const orientation = this.calculateBoundsRect();
+        const rtl = this.app.getSettings().rtl;
 
         if (this.orientation !== orientation) {
             this.orientation = orientation;
             this.app.updateOrientation(orientation);
+        }
+
+        if (this.rtl !== rtl) {
+            this.rtl = rtl;
+            this.app.updateRTL(rtl);
         }
     }
 
@@ -354,6 +362,13 @@ export abstract class Render {
      */
     public getOrientation(): Orientation {
         return this.orientation!;
+    }
+
+    /**
+     * Get the current reading direction
+     */
+    public getRTL(): boolean {
+        return this.rtl ?? false;
     }
 
     /**

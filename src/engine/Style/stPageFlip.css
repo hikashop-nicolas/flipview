@@ -8,7 +8,7 @@
   touch-action: pan-y;
 }
 
-.sft__wrapper {
+.stf__wrapper {
   position: relative;
   width: 100%;
   box-sizing: border-box;
@@ -58,4 +58,14 @@
   position: absolute;
   left: 0;
   top: 0;
+}
+
+/* Right-to-left: mirror the book, then mirror each page's content back so the
+   pages read normally while the spine and the page order swap sides. */
+.stf__wrapper.--rtl {
+  transform: scaleX(-1);
+}
+
+.stf__wrapper.--rtl .stf__item > * {
+  transform: scaleX(-1);
 }

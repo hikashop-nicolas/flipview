@@ -30,6 +30,8 @@ export interface FlipviewOptions {
   zoom?: boolean | ZoomOptions;
   /** Track the page in the URL hash. true uses #page=N, a string names the parameter. */
   deepLink?: boolean | string;
+  /** Right-to-left reading: the spine and the page order swap sides. */
+  rtl?: boolean;
   onReady?: (handle: FlipviewHandle) => void;
   onPageChange?: (index: number) => void;
   /** Called when a page fails to paint. The viewer keeps going. */
@@ -64,6 +66,7 @@ const DEFAULTS = {
   keyboard: true,
   zoom: true,
   deepLink: false,
+  rtl: false,
 } as const;
 
 /** Re-render pages only once the book has grown by more than this, to avoid churn. */
@@ -138,6 +141,7 @@ export function createFlipview(
     usePortrait: opt.mode !== "double",
     mobileScrollSupport: false,
     clickEventForward: true,
+    rtl: opt.rtl,
   });
   flip.loadFromHTML(shells);
 

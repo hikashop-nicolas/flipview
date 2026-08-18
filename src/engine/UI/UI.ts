@@ -130,6 +130,16 @@ export abstract class UI {
         this.update();
     }
 
+    /**
+     * Updates styles based on the reading direction
+     *
+     * @param {boolean} rtl - New reading direction
+     */
+    public setRTLStyle(rtl: boolean): void {
+        this.wrapper.classList.toggle('--rtl', rtl);
+        this.update();
+    }
+
     protected removeHandlers(): void {
         window.removeEventListener('resize', this.onResize);
 
@@ -165,7 +175,9 @@ export abstract class UI {
         const rect = this.distElement.getBoundingClientRect();
 
         return {
-            x: x - rect.left,
+            // A mirrored book needs a mirrored pointer, or the fold follows the
+            // wrong corner.
+            x: this.app.getSettings().rtl ? rect.width - (x - rect.left) : x - rect.left,
             y: y - rect.top,
         };
     }
