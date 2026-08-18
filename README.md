@@ -81,4 +81,16 @@ npm run build:demo   # demo to demo-dist/ for GitHub Pages
 sh build/make-sample.sh   # regenerate the demo's sample PDF
 ```
 
+## Theming
+
+Every colour and size is a custom property with its default in the `var()` call,
+not declared on the root element, so a page can set them on any ancestor:
+
+```css
+.my-page { --fv-bar-bg: #8e24aa; --fv-page-bg: #fffdf7; }
+```
+
+Tokens: `--fv-page-bg`, `--fv-page-fg`, `--fv-cover-bg`, `--fv-bar-bg`,
+`--fv-bar-fg`, `--fv-bar-hover`, `--fv-bar-height`, `--fv-radius`, `--fv-gap`.
+
 MIT.

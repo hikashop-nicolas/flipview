@@ -1,20 +1,15 @@
-/* Everything themeable is a custom property on .fv-root, so a host restyles the
-   viewer without overriding rules. */
-.fv-root {
-  --fv-page-bg: #ffffff;
-  --fv-page-fg: #9aa4b1;
-  --fv-cover-bg: #f3f5f8;
-  --fv-bar-bg: #1976d2;
-  --fv-bar-fg: #ffffff;
-  --fv-bar-hover: rgba(255, 255, 255, 0.22);
-  --fv-bar-height: 44px;
-  --fv-radius: 8px;
-  --fv-gap: 12px;
+/* Everything themeable is a custom property, and every default lives in the
+   var() call rather than in a declaration on .fv-root. Declaring them here would
+   beat any value an embedding page sets on an ancestor, since an inherited value
+   only applies where the element declares nothing itself.
 
+   The tokens: --fv-page-bg, --fv-page-fg, --fv-cover-bg, --fv-bar-bg, --fv-bar-fg,
+   --fv-bar-hover, --fv-bar-height, --fv-radius, --fv-gap. */
+.fv-root {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--fv-gap);
+  gap: var(--fv-gap, 12px);
   width: 100%;
 }
 
@@ -26,7 +21,7 @@
 }
 
 .fv-stage:focus-visible {
-  outline: 2px solid var(--fv-bar-bg);
+  outline: 2px solid var(--fv-bar-bg, #1976d2);
   outline-offset: 4px;
 }
 
@@ -45,12 +40,12 @@
 }
 
 .fv-page {
-  background: var(--fv-page-bg);
+  background: var(--fv-page-bg, #ffffff);
   overflow: hidden;
 }
 
 .fv-page[data-density="hard"] {
-  background: var(--fv-cover-bg);
+  background: var(--fv-cover-bg, #f3f5f8);
 }
 
 .fv-page-inner {
@@ -79,7 +74,7 @@
 .fv-page-number {
   position: absolute;
   font: 600 14px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
-  color: var(--fv-page-fg);
+  color: var(--fv-page-fg, #9aa4b1);
 }
 
 .fv-rendered .fv-page-number {
@@ -99,11 +94,11 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  height: var(--fv-bar-height);
+  height: var(--fv-bar-height, 44px);
   padding: 0 6px;
-  border-radius: var(--fv-radius);
-  background: var(--fv-bar-bg);
-  color: var(--fv-bar-fg);
+  border-radius: var(--fv-radius, 8px);
+  background: var(--fv-bar-bg, #1976d2);
+  color: var(--fv-bar-fg, #ffffff);
   font: 500 14px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
@@ -123,7 +118,7 @@
 
 .fv-btn:hover,
 .fv-btn:focus-visible {
-  background: var(--fv-bar-hover);
+  background: var(--fv-bar-hover, rgba(255, 255, 255, 0.22));
 }
 
 .fv-btn svg {
@@ -172,7 +167,7 @@
   padding: 0 4px;
   border: 0;
   border-radius: 5px;
-  background: var(--fv-bar-hover);
+  background: var(--fv-bar-hover, rgba(255, 255, 255, 0.22));
   color: inherit;
   font: inherit;
   text-align: center;
@@ -186,7 +181,7 @@
 .fv-root:fullscreen,
 .fv-root.fv-fullscreen {
   justify-content: center;
-  padding: var(--fv-gap);
+  padding: var(--fv-gap, 12px);
   background: #2b3138;
 }
 
