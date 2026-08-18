@@ -7,6 +7,8 @@ export interface ToolbarTarget {
   next(): void;
   last(): void;
   goTo(index: number): void;
+  zoomIn(): void;
+  zoomOut(): void;
   toggleFullscreen(): void;
   pageCount: number;
 }
@@ -15,6 +17,7 @@ export interface ToolbarButtons {
   nav?: boolean;
   ends?: boolean;
   pageInput?: boolean;
+  zoom?: boolean;
   fullscreen?: boolean;
 }
 
@@ -22,6 +25,7 @@ const ALL: Required<ToolbarButtons> = {
   nav: true,
   ends: true,
   pageInput: true,
+  zoom: true,
   fullscreen: true,
 };
 
@@ -31,6 +35,8 @@ const ICONS = {
   prev: "M15 6 7 12l8 6z",
   next: "M9 6l8 6-8 6z",
   last: "M6 6l9 6-9 6zM16 6h2v12h-2z",
+  zoomIn: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zm0 3.5v7m-3.5-3.5h7M16.5 16.5 21 21",
+  zoomOut: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM7.5 11h7M16.5 16.5 21 21",
   fullscreen: "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5",
 };
 
@@ -74,8 +80,14 @@ export function createToolbar(target: ToolbarTarget, buttons: ToolbarButtons = {
   if (show.nav) el.appendChild(button("next", t("next"), () => target.next()));
   if (show.ends) el.appendChild(button("last", t("last"), () => target.last()));
 
-  if (show.fullscreen) {
+  if (show.zoom) {
     el.appendChild(spacer());
+    el.appendChild(button("zoomOut", t("zoomOut"), () => target.zoomOut()));
+    el.appendChild(button("zoomIn", t("zoomIn"), () => target.zoomIn()));
+  }
+
+  if (show.fullscreen) {
+    if (!show.zoom) el.appendChild(spacer());
     el.appendChild(button("fullscreen", t("fullscreen"), () => target.toggleFullscreen()));
   }
 

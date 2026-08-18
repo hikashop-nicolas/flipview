@@ -1,6 +1,7 @@
 import { PageFlip } from "page-flip/dist/js/page-flip.module.js";
 import type { PageSource } from "./source";
 import { createToolbar, type ToolbarButtons } from "./toolbar";
+import { createZoom, type ZoomOptions } from "./zoom";
 
 export interface FlipviewOptions {
   /** 'auto' turns into a single-page book on narrow screens. */
@@ -19,6 +20,8 @@ export interface FlipviewOptions {
   toolbar?: boolean | ToolbarButtons;
   /** Arrow keys, Home and End drive the book when it has focus. */
   keyboard?: boolean;
+  /** false disables zooming; an object tunes the min, max and step. */
+  zoom?: boolean | ZoomOptions;
   onReady?: (handle: FlipviewHandle) => void;
   onPageChange?: (index: number) => void;
 }
@@ -29,6 +32,9 @@ export interface FlipviewHandle {
   prev(): void;
   first(): void;
   last(): void;
+  zoomIn(): void;
+  zoomOut(): void;
+  zoomReset(): void;
   toggleFullscreen(): void;
   readonly pageCount: number;
   currentPage(): number;
@@ -45,6 +51,7 @@ const DEFAULTS = {
   breakpoint: 700,
   toolbar: true,
   keyboard: true,
+  zoom: true,
 } as const;
 
 /** Re-render pages only once the book has grown by more than this, to avoid churn. */
@@ -116,6 +123,14 @@ export function createFlipview(
     clickEventForward: true,
   });
   flip.loadFromHTML(shells);
+
+  // Zooming transforms the book element. While zoomed, the zoom layer takes the
+  // pointer in the capture phase, so a drag pans instead of starting a flip.
+  const zoom = opt.zoom
+    ? createZoom(stage, book, opt.zoom === true ? {} : opt.zoom, (s) => {
+        root.classList.toggle("fv-zoomed", s > 1);
+      })
+    : null;
 
   // Rendered canvases, most-recently-used last. Evicting one just drops the canvas.
   const rendered: number[] = [];
@@ -193,6 +208,7 @@ export function createFlipview(
     const next = fit(flip.getOrientation() === "portrait");
     book.style.height = `${next.height}px`;
     flip.update();
+    zoom?.refresh();
     if (next.width > renderWidth * RERENDER_RATIO) {
       renderWidth = next.width;
       for (const i of rendered.splice(0)) drop(i);
@@ -231,6 +247,9 @@ export function createFlipview(
     prev: () => flip.flipPrev(),
     first: () => handle.goTo(0),
     last: () => handle.goTo(source.pageCount - 1),
+    zoomIn: () => zoom?.in(),
+    zoomOut: () => zoom?.out(),
+    zoomReset: () => zoom?.reset(),
     toggleFullscreen() {
       if (document.fullscreenElement === root) void document.exitFullscreen();
       else void root.requestFullscreen?.();
@@ -242,14 +261,16 @@ export function createFlipview(
       observer.disconnect();
       document.removeEventListener("fullscreenchange", onFullscreen);
       cancelAnimationFrame(frame);
+      zoom?.destroy();
       flip.destroy();
       source.destroy();
       root.remove();
     },
   };
 
+  const buttons = opt.toolbar === true || opt.toolbar === false ? {} : opt.toolbar;
   const bar = opt.toolbar
-    ? createToolbar(handle, opt.toolbar === true ? {} : opt.toolbar)
+    ? createToolbar(handle, { zoom: !!opt.zoom, ...buttons })
     : null;
   if (bar) root.appendChild(bar.el);
   bar?.update(0);

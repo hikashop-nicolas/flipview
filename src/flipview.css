@@ -34,6 +34,15 @@
   touch-action: pan-y;
 }
 
+.fv-zoomed .fv-stage {
+  cursor: grab;
+  overflow: hidden;
+}
+
+.fv-zoomed .fv-stage.fv-panning {
+  cursor: grabbing;
+}
+
 .fv-page {
   background: var(--fv-page-bg);
   overflow: hidden;
@@ -117,6 +126,8 @@
 }
 
 /* The zoom and fullscreen glyphs are strokes, not filled shapes. */
+.fv-btn-zoomIn svg,
+.fv-btn-zoomOut svg,
 .fv-btn-fullscreen svg {
   fill: none;
   stroke: currentColor;
