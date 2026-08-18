@@ -13,6 +13,7 @@ async function open(load: () => Promise<Awaited<ReturnType<typeof createPdfSourc
   status.textContent = "loading...";
   const source = await load();
   book = createFlipview(stage, source, {
+    deepLink: true,
     onPageChange: (i) => (status.textContent = `page ${i + 1} / ${source.pageCount}`),
   });
   status.textContent = `page 1 / ${source.pageCount}`;

@@ -4,6 +4,7 @@
 // - viewer.ts   the book itself: shells, lazy rendering, flip engine
 // - toolbar.ts  the optional control bar
 // - zoom.ts     scale and pan, and the gesture split with the flip engine
+// - deeplink.ts the page number in the URL hash
 // - i18n.ts     every user-visible string
 export { createFlipview, type FlipviewOptions, type FlipviewHandle } from "./viewer";
 export {
@@ -14,4 +15,5 @@ export {
 } from "./source";
 export { type ToolbarButtons, type ToolbarTarget } from "./toolbar";
 export { type ZoomOptions, type ZoomHandle } from "./zoom";
+export { createDeepLink, type DeepLink } from "./deeplink";
 export { setStrings, t, type Strings } from "./i18n";

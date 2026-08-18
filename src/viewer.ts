@@ -2,6 +2,7 @@ import { PageFlip } from "page-flip/dist/js/page-flip.module.js";
 import type { PageSource } from "./source";
 import { createToolbar, type ToolbarButtons } from "./toolbar";
 import { createZoom, type ZoomOptions } from "./zoom";
+import { createDeepLink } from "./deeplink";
 
 export interface FlipviewOptions {
   /** 'auto' turns into a single-page book on narrow screens. */
@@ -10,10 +11,14 @@ export interface FlipviewOptions {
   flippingTime?: number;
   /** How many rendered page canvases to keep in memory. */
   cacheSize?: number;
-  /** Treat page 1 as a standalone cover. */
+  /** Stand page 1 alone as a cover. Off by default: it makes the first and last
+   *  spreads hold a single page while the book rect still spans both halves, so
+   *  those two turns behave differently from every other one. */
   showCover?: boolean;
   /** Make the covers rigid. Off by default: the rigid path visibly glitches. */
   hardCovers?: boolean;
+  /** Lift the page corner under the pointer. */
+  pageCorners?: boolean;
   /** Below this container width in px, 'auto' mode shows one page at a time. */
   breakpoint?: number;
   /** false hides the toolbar entirely; an object turns individual buttons off. */
@@ -22,6 +27,8 @@ export interface FlipviewOptions {
   keyboard?: boolean;
   /** false disables zooming; an object tunes the min, max and step. */
   zoom?: boolean | ZoomOptions;
+  /** Track the page in the URL hash. true uses #page=N, a string names the parameter. */
+  deepLink?: boolean | string;
   onReady?: (handle: FlipviewHandle) => void;
   onPageChange?: (index: number) => void;
 }
@@ -46,12 +53,14 @@ const DEFAULTS = {
   mode: "auto",
   flippingTime: 700,
   cacheSize: 8,
-  showCover: true,
+  showCover: false,
   hardCovers: false,
   breakpoint: 700,
+  pageCorners: true,
   toolbar: true,
   keyboard: true,
   zoom: true,
+  deepLink: false,
 } as const;
 
 /** Re-render pages only once the book has grown by more than this, to avoid churn. */
@@ -118,6 +127,7 @@ export function createFlipview(
     drawShadow: true,
     flippingTime: opt.flippingTime,
     showCover: opt.showCover,
+    showPageCorners: opt.pageCorners,
     usePortrait: opt.mode !== "double",
     mobileScrollSupport: false,
     clickEventForward: true,
@@ -203,8 +213,12 @@ export function createFlipview(
     return { width, height };
   }
 
-  // The block height drives the stretch layout, so it has to follow the orientation.
   function relayout(): void {
+    if (!settled) {
+      pendingLayout = true;
+      return;
+    }
+    pendingLayout = false;
     const next = fit(flip.getOrientation() === "portrait");
     book.style.height = `${next.height}px`;
     flip.update();
@@ -216,8 +230,16 @@ export function createFlipview(
     }
   }
 
+  // A flip changes the book's height, which trips the ResizeObserver, and calling
+  // update() mid-animation snaps the page to its end state. So layout work waits
+  // for the engine to settle, and only a real width change counts as a resize.
+  let settled = true;
+  let pendingLayout = false;
+  let lastWidth = container.clientWidth;
+
   function announce(index: number): void {
     bar?.update(index);
+    link?.write(index);
     options.onPageChange?.(index);
   }
 
@@ -227,11 +249,18 @@ export function createFlipview(
     announce(index);
   });
   flip.on("changeOrientation", () => relayout());
+  flip.on("changeState", (e) => {
+    settled = (e as { data: string }).data === "read";
+    if (settled && pendingLayout) relayout();
+  });
 
   ensureWindow(0);
 
   let frame = 0;
-  const observer = new ResizeObserver(() => {
+  const observer = new ResizeObserver((entries) => {
+    const width = entries[0]?.contentRect.width ?? 0;
+    if (Math.abs(width - lastWidth) < 1) return;
+    lastWidth = width;
     cancelAnimationFrame(frame);
     frame = requestAnimationFrame(relayout);
   });
@@ -262,11 +291,19 @@ export function createFlipview(
       document.removeEventListener("fullscreenchange", onFullscreen);
       cancelAnimationFrame(frame);
       zoom?.destroy();
+      link?.destroy();
       flip.destroy();
       source.destroy();
       root.remove();
     },
   };
+
+  // Hash changes come from outside, so they drive the engine without writing back.
+  const link = opt.deepLink
+    ? createDeepLink(opt.deepLink === true ? "page" : opt.deepLink, (index) => {
+        if (index !== flip.getCurrentPageIndex()) handle.goTo(index);
+      })
+    : null;
 
   const buttons = opt.toolbar === true || opt.toolbar === false ? {} : opt.toolbar;
   const bar = opt.toolbar
@@ -301,6 +338,9 @@ export function createFlipview(
 
   // The toolbar was not in the DOM when the first size was computed.
   relayout();
+
+  const linked = link?.read();
+  if (linked != null && linked > 0 && linked < source.pageCount) handle.goTo(linked);
 
   options.onReady?.(handle);
   return handle;

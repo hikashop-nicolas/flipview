@@ -44,7 +44,13 @@ sources need nothing.
 | `breakpoint` | `700` | container width in px below which `auto` shows one page |
 | `flippingTime` | `700` | flip animation duration in ms |
 | `cacheSize` | `8` | how many rendered page canvases to keep |
-| `showCover` | `true` | treat the first and last page as rigid covers |
+| `showCover` | `false` | stand page 1 alone as a cover instead of pairing it |
+| `hardCovers` | `false` | make the covers rigid rather than bending |
+| `pageCorners` | `true` | lift the page corner under the pointer |
+| `deepLink` | `false` | track the page in the URL hash, `true` uses `#page=N` |
+| `toolbar` | `true` | `false` hides it, an object turns single buttons off |
+| `zoom` | `true` | `false` disables it, an object tunes min, max and step |
+| `keyboard` | `true` | arrow keys, Home and End when the stage has focus |
 
 ## Development
 
