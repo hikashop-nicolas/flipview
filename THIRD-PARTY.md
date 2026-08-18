@@ -19,3 +19,16 @@ is the full list.
 - Source: https://github.com/mozilla/pdf.js (`pdfjs-dist`)
 - Licence: Apache-2.0
 - Not vendored: an optional peer dependency the host installs and configures.
+
+### Our changes to StPageFlip
+
+| Change | Origin |
+|---|---|
+| Hard pages pinned to the block's left edge, not the book's | ours, caused a gap at the spine |
+| `flipPrev` jumped from x=10 in block space | upstream PR #30, unmerged |
+| `destroy()` never cancelled the render loop | upstream issue #71 |
+| `.sft__wrapper` never matched anything | upstream issue #55 |
+| Right-to-left reading | adapted from upstream PR #45, unmerged |
+| Compiles under strictNullChecks | ours |
+| `const enum` to `enum`, type-only imports | ours, needed to consume it as source |
+| Unit tests for the geometry helpers | ours |

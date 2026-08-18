@@ -50,6 +50,7 @@ sources need nothing.
 | `hardCovers` | `false` | make the covers rigid rather than bending |
 | `pageCorners` | `true` | lift the page corner under the pointer |
 | `deepLink` | `false` | track the page in the URL hash, `true` uses `#page=N` |
+| `rtl` | `false` | right-to-left reading, spine and page order swap sides |
 | `toolbar` | `true` | `false` hides it, an object turns single buttons off |
 | `zoom` | `true` | `false` disables it, an object tunes min, max and step |
 | `keyboard` | `true` | arrow keys, Home and End when the stage has focus |
@@ -58,6 +59,7 @@ sources need nothing.
 
 ```sh
 npm install
+npm test             # unit tests for the geometry helpers
 npm run dev          # demo on localhost:5173
 npm run build        # library to dist/
 npm run build:demo   # demo to demo-dist/ for GitHub Pages
