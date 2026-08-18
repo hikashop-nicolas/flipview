@@ -28,7 +28,9 @@ book.destroy();
 - **pdf.js** renders each page to a canvas, on demand. Only a small window of pages
   around the current one is ever painted, and a small LRU drops the rest, so a
   300-page PDF costs about the same memory as a 10-page one.
-- **StPageFlip** (MIT) drives the fold geometry and the drag interaction.
+- **StPageFlip** (MIT) drives the fold geometry and the drag interaction. It is
+  vendored in `src/engine` rather than depended on, because upstream stopped in
+  January 2024. Our patches to it are ordinary commits: `git log src/engine`.
 - Pages are plain DOM elements, so anything can be laid over a page later: links,
   hotspots, a text layer for selection and search.
 
