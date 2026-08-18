@@ -10,6 +10,8 @@ export interface ToolbarTarget {
   zoomIn(): void;
   zoomOut(): void;
   toggleFullscreen(): void;
+  download(): void;
+  share(): Promise<boolean>;
   pageCount: number;
 }
 
@@ -19,6 +21,8 @@ export interface ToolbarButtons {
   pageInput?: boolean;
   zoom?: boolean;
   fullscreen?: boolean;
+  download?: boolean;
+  share?: boolean;
 }
 
 const ALL: Required<ToolbarButtons> = {
@@ -27,6 +31,8 @@ const ALL: Required<ToolbarButtons> = {
   pageInput: true,
   zoom: true,
   fullscreen: true,
+  download: false,
+  share: false,
 };
 
 // 24x24 icons on a 0 0 24 24 grid, stroked with currentColor so theming is free.
@@ -38,6 +44,8 @@ const ICONS = {
   zoomIn: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zm0 3.5v7m-3.5-3.5h7M16.5 16.5 21 21",
   zoomOut: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM7.5 11h7M16.5 16.5 21 21",
   fullscreen: "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5",
+  download: "M12 3v11m0 0 4-4m-4 4-4-4M5 19h14",
+  share: "M9 13a3 3 0 1 1-3-3 3 3 0 0 1 3 3zm12-6a3 3 0 1 1-3-3 3 3 0 0 1 3 3zm0 12a3 3 0 1 1-3-3 3 3 0 0 1 3 3zM8.6 11.6l6.8-3.2m0 7.2-6.8-3.2",
 };
 
 type IconName = keyof typeof ICONS;
@@ -84,6 +92,26 @@ export function createToolbar(target: ToolbarTarget, buttons: ToolbarButtons = {
     el.appendChild(spacer());
     el.appendChild(button("zoomOut", t("zoomOut"), () => target.zoomOut()));
     el.appendChild(button("zoomIn", t("zoomIn"), () => target.zoomIn()));
+  }
+
+  if (show.download) {
+    el.appendChild(button("download", t("download"), () => target.download()));
+  }
+
+  if (show.share) {
+    const shared = button("share", t("share"), () => {
+      void target.share().then((ok) => {
+        // The only feedback a copy can give is that it happened.
+        if (!ok) return;
+        shared.classList.add("fv-btn-done");
+        shared.title = t("shared");
+        window.setTimeout(() => {
+          shared.classList.remove("fv-btn-done");
+          shared.title = t("share");
+        }, 1600);
+      });
+    });
+    el.appendChild(shared);
   }
 
   if (show.fullscreen) {

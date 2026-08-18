@@ -6,6 +6,7 @@ import type { PageSource } from "./source";
 import { createToolbar, type ToolbarButtons } from "./toolbar";
 import { createZoom, type ZoomOptions } from "./zoom";
 import { createDeepLink } from "./deeplink";
+import { createFlipSound, type FlipSound } from "./sound";
 
 export interface FlipviewOptions {
   /** 'auto' turns into a single-page book on narrow screens. */
@@ -32,6 +33,12 @@ export interface FlipviewOptions {
   deepLink?: boolean | string;
   /** Right-to-left reading: the spine and the page order swap sides. */
   rtl?: boolean;
+  /** Play a page-turn sound. A number sets the volume, 0 to 1. */
+  sound?: boolean | number;
+  /** Offer the original document for download, from this URL. */
+  downloadUrl?: string;
+  /** Offer a button that copies a link to the current page. Needs deepLink. */
+  share?: boolean;
   onReady?: (handle: FlipviewHandle) => void;
   onPageChange?: (index: number) => void;
   /** Called when a page fails to paint. The viewer keeps going. */
@@ -48,6 +55,10 @@ export interface FlipviewHandle {
   zoomOut(): void;
   zoomReset(): void;
   toggleFullscreen(): void;
+  /** Downloads the original document, when the host gave us a URL for it. */
+  download(): void;
+  /** Copies a link to the current page. Resolves false when the browser refused. */
+  share(): Promise<boolean>;
   readonly pageCount: number;
   currentPage(): number;
   orientation(): "portrait" | "landscape";
@@ -67,6 +78,8 @@ const DEFAULTS = {
   zoom: true,
   deepLink: false,
   rtl: false,
+  sound: false,
+  share: false,
 } as const;
 
 /** Re-render pages only once the book has grown by more than this, to avoid churn. */
@@ -288,10 +301,15 @@ export function createFlipview(
     options.onPageChange?.(index);
   }
 
+  const sound: FlipSound | null = opt.sound
+    ? createFlipSound(typeof opt.sound === "number" ? opt.sound : undefined)
+    : null;
+
   flip.on("flip", (e) => {
     const index = Number((e as { data: number }).data);
     ensureWindow(index);
     announce(index);
+    sound?.play();
   });
   flip.on("changeOrientation", () => relayout());
   flip.on("changeState", (e) => {
@@ -321,6 +339,25 @@ export function createFlipview(
     prev: () => flip.flipPrev(),
     first: () => handle.goTo(0),
     last: () => handle.goTo(source.pageCount - 1),
+    download() {
+      if (!opt.downloadUrl) return;
+      const link = document.createElement("a");
+      link.href = opt.downloadUrl;
+      link.download = "";
+      link.rel = "noopener";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    },
+    async share() {
+      link?.write(flip.getCurrentPageIndex());
+      try {
+        await navigator.clipboard.writeText(location.href);
+        return true;
+      } catch {
+        return false;
+      }
+    },
     zoomIn: () => zoom?.in(),
     zoomOut: () => zoom?.out(),
     zoomReset: () => zoom?.reset(),
@@ -337,6 +374,7 @@ export function createFlipview(
       cancelAnimationFrame(frame);
       zoom?.destroy();
       link?.destroy();
+      sound?.destroy();
       flip.destroy();
       source.destroy();
       root.remove();
@@ -352,7 +390,12 @@ export function createFlipview(
 
   const buttons = opt.toolbar === true || opt.toolbar === false ? {} : opt.toolbar;
   const bar = opt.toolbar
-    ? createToolbar(handle, { zoom: !!opt.zoom, ...buttons })
+    ? createToolbar(handle, {
+        zoom: !!opt.zoom,
+        download: !!opt.downloadUrl,
+        share: !!opt.share && !!opt.deepLink,
+        ...buttons,
+      })
     : null;
   if (bar) root.appendChild(bar.el);
   bar?.update(0);

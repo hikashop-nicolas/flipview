@@ -62,6 +62,9 @@ sources need nothing.
 | `pageCorners` | `true` | lift the page corner under the pointer |
 | `deepLink` | `false` | track the page in the URL hash, `true` uses `#page=N` |
 | `rtl` | `false` | right-to-left reading, spine and page order swap sides |
+| `sound` | `false` | page-turn sound, synthesised, no audio file to ship. A number sets the volume |
+| `downloadUrl` | none | offer the original document for download from this URL |
+| `share` | `false` | a button that copies a link to the current page, needs `deepLink` |
 | `toolbar` | `true` | `false` hides it, an object turns single buttons off |
 | `zoom` | `true` | `false` disables it, an object tunes min, max and step |
 | `keyboard` | `true` | arrow keys, Home and End when the stage has focus |

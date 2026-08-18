@@ -142,6 +142,19 @@
   stroke-linecap: round;
 }
 
+.fv-btn-done {
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.fv-btn-share svg,
+.fv-btn-download svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .fv-toolbar-spacer {
   width: 10px;
 }

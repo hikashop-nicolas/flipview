@@ -13,6 +13,9 @@ const EN = {
   fullscreen: "Fullscreen",
   exitFullscreen: "Exit fullscreen",
   close: "Close",
+  download: "Download",
+  share: "Copy a link to this page",
+  shared: "Link copied",
 };
 
 export type Strings = typeof EN;

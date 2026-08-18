@@ -10,6 +10,7 @@ const cover = document.getElementById("cover") as HTMLInputElement;
 cover.checked = true;
 const hard = document.getElementById("hard") as HTMLInputElement;
 const rtl = document.getElementById("rtl") as HTMLInputElement;
+const sound = document.getElementById("sound") as HTMLInputElement;
 const slow = document.getElementById("slow") as HTMLInputElement;
 
 let book: FlipviewHandle | null = null;
@@ -27,6 +28,9 @@ async function open(next?: () => Promise<PageSource>, startAt = 0) {
     showCover: cover.checked,
     hardCovers: hard.checked,
     rtl: rtl.checked,
+    sound: sound.checked,
+    share: true,
+    downloadUrl: "./sample.pdf",
     flippingTime: slow.checked ? 3000 : 700,
     onError: (err, i) => (status.textContent = `page ${i + 1}: ${String(err)}`.slice(0, 120)),
     onPageChange: (i) => (status.textContent = `page ${i + 1} / ${source.pageCount}`),
@@ -38,7 +42,7 @@ async function open(next?: () => Promise<PageSource>, startAt = 0) {
 }
 
 // Rebuilding keeps the reader where they were, so options can be compared in place.
-for (const box of [cover, hard, rtl, slow]) {
+for (const box of [cover, hard, rtl, sound, slow]) {
   box.addEventListener("change", () => void open(undefined, book?.currentPage() ?? 0));
 }
 
