@@ -335,11 +335,20 @@ export function createFlipview(
   const sounds = opt.soundUrl === undefined ? [] : [opt.soundUrl].flat();
   const sound: FlipSound | null = sounds.length > 0 ? createFlipSound(sounds, opt.soundVolume) : null;
 
+  // The engine fires "flip" whenever it re-shows the spread, which includes every
+  // relayout: entering fullscreen, leaving it, a resize. Only a change of page is
+  // a page turn, and only a page turn should be heard.
+  let shown = 0;
+
   flip.on("flip", (e) => {
     const index = Number((e as { data: number }).data);
+    const turned = index !== shown;
+    shown = index;
+
     ensureWindow(index);
     announce(index);
-    sound?.play();
+
+    if (turned) sound?.play();
   });
   flip.on("changeOrientation", () => relayout());
   flip.on("changeState", (e) => {
