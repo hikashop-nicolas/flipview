@@ -93,13 +93,12 @@ const DEFAULTS = {
 const RERENDER_RATIO = 1.25;
 
 /**
- * The engine picks portrait when its block is narrower than minWidth * 2. Since the
- * block is sized to the book, that test would depend on the page size rather than on
- * the container, so minWidth is driven to one extreme or the other and the decision
- * stays here, where it can be made on the container width.
+ * The engine picks portrait when its block is narrower than minWidth * 2, and the
+ * block is sized to the book, so setting minWidth to one page width decides it:
+ * a portrait block is one page wide and goes portrait, a landscape block is two
+ * and does not. It also lands on the element as a min-width, which is why it has
+ * to be a real page width rather than a sentinel.
  */
-const PORTRAIT_MIN = 1e6;
-const LANDSCAPE_MIN = 1;
 
 export function createFlipview(
   container: HTMLElement,
@@ -149,7 +148,7 @@ export function createFlipview(
     width: start.width,
     height: start.height,
     size: "stretch" as SizeType,
-    minWidth: startPortrait ? PORTRAIT_MIN : LANDSCAPE_MIN,
+    minWidth: start.width,
     maxWidth: 2000,
     minHeight: 240,
     maxHeight: 2600,
@@ -308,7 +307,9 @@ export function createFlipview(
     const portrait = wantPortrait();
     const next = fit(portrait);
     size(portrait, next);
-    flip.getSettings().minWidth = portrait ? PORTRAIT_MIN : LANDSCAPE_MIN;
+    // One page wide: this decides the engine's orientation and is also written
+    // onto the element as a min-width, so it has to be a real width.
+    flip.getSettings().minWidth = next.width;
     flip.update();
     zoom?.refresh();
     if (next.width > renderWidth * RERENDER_RATIO) {
