@@ -1,5 +1,7 @@
 # flipview
 
+**[▶ Live demo](https://hikashop-nicolas.github.io/flipview/)** — open a PDF and turn its pages.
+
 A standalone, framework-agnostic, client-side **page-flip book viewer**. It turns a
 **PDF** or a **list of images** into a book with real turning pages, in the browser.
 No server, no upload, no account.
