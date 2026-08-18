@@ -22,4 +22,5 @@ export { createDeepLink, type DeepLink } from "./deeplink";
 export { openLightbox, type LightboxOptions, type LightboxHandle } from "./lightbox";
 export { createFlipSound, type FlipSound } from "./sound";
 export { createSearch, highlight, type SearchHandle, type SearchHit } from "./search";
+export { renderHotspots, type Hotspot, type HotspotTarget } from "./hotspots";
 export { setStrings, t, type Strings } from "./i18n";

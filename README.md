@@ -79,6 +79,35 @@ sources need nothing.
 | `textLayer` | `true` | lay the page's own text over each page, where the source has it |
 | `search` | `true` | offer a search box, where the source can give up its words |
 | `panel` | `true` | offer a side panel with the document's contents and its pages |
+| `hotspots` | none | clickable regions over the pages, in fractions of a page |
+| `onHotspot` | none | called when one is used, return `false` to handle it yourself |
+
+## Hotspots
+
+A hotspot is a region of a page bound to something: a link, another page, or
+nothing at all where the host wants to answer for it. Coordinates are fractions of
+the page rather than pixels, so a hotspot stays where it was put through zoom, a
+resize and the single-page layout.
+
+```js
+createFlipview(el, source, {
+  hotspots: [
+    { page: 0, x: 0.08, y: 0.1, width: 0.4, height: 0.12, href: "https://example.com/" },
+    { page: 1, x: 0.55, y: 0.62, width: 0.34, height: 0.2, goToPage: 5, label: "Jump to page 6" },
+    { page: 2, x: 0.12, y: 0.3, width: 0.3, height: 0.22, label: "Blue kettle", data: { product: "42" } },
+  ],
+  onHotspot(spot) {
+    if (!spot.data?.product) return;      // let the viewer handle the others
+    openProduct(spot.data.product);
+    return false;                          // and this one is ours
+  },
+});
+```
+
+Each one is a real link or a real button, named for a screen reader by its `label`,
+so it is reachable by keyboard and can be opened in a new tab. They are invisible
+until hovered or focused; add `fv-hotspots-shown` to the root to show them all, which
+is what a shoppable catalogue usually wants.
 
 ## Development
 

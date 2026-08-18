@@ -114,6 +114,16 @@
 			]
 		},
 		{
+			"id": "hotspots",
+			"comment": "Regions of a page bound to something, shown rather than hovered for.",
+			"query": "hotspots=1&showspots=1",
+			"steps": [
+				{
+					"wait": 1200
+				}
+			]
+		},
+		{
 			"id": "contents",
 			"comment": "A document that has its own table of contents.",
 			"query": "panel=1&doc=outline",

@@ -442,3 +442,38 @@
   stroke-width: 2;
   stroke-linecap: round;
 }
+
+/* Hotspots: regions of a page bound to something, sized in percentages of it so
+   they hold through zoom, a resize and the single-page layout. */
+.fv-hotspots {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+}
+
+.fv-hotspot {
+  position: absolute;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: var(--fv-hotspot-radius, 2px);
+  cursor: pointer;
+  /* Invisible until it is asked for: a catalogue should look like a catalogue. */
+  box-shadow: inset 0 0 0 2px transparent;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fv-hotspot:hover,
+.fv-hotspot:focus-visible {
+  background: var(--fv-hotspot-fill, rgb(59 130 246 / 0.18));
+  box-shadow: inset 0 0 0 2px var(--fv-hotspot-line, rgb(59 130 246 / 0.9));
+  outline: none;
+}
+
+/* Show them all, for a host that wants to advertise that the page is shoppable. */
+.fv-root.fv-hotspots-shown .fv-hotspot {
+  background: var(--fv-hotspot-fill, rgb(59 130 246 / 0.18));
+  box-shadow: inset 0 0 0 2px var(--fv-hotspot-line, rgb(59 130 246 / 0.9));
+}

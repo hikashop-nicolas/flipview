@@ -10,6 +10,7 @@ import { createDeepLink } from "./deeplink";
 import { createPanel, type PanelHandle } from "./panel";
 import { createSearch, highlight, type SearchHit } from "./search";
 import { createFlipSound, type FlipSound } from "./sound";
+import { renderHotspots, type Hotspot } from "./hotspots";
 
 export interface FlipviewOptions {
   /** 'auto' turns into a single-page book on narrow screens. */
@@ -55,6 +56,13 @@ export interface FlipviewOptions {
   downloadUrl?: string;
   /** Offer a button that copies a link to the current page. Needs deepLink. */
   share?: boolean;
+  /** Clickable regions over the pages, in page fractions. */
+  hotspots?: Hotspot[];
+  /**
+   * Called when one is used, before anything else happens. Return false to keep
+   * the viewer from following it, so a host can open its own thing instead.
+   */
+  onHotspot?: (hotspot: Hotspot, event: MouseEvent) => boolean | void;
   onReady?: (handle: FlipviewHandle) => void;
   onPageChange?: (index: number) => void;
   /** Called when a page fails to paint. The viewer keeps going. */
@@ -81,6 +89,8 @@ export interface FlipviewHandle {
   download(): void;
   /** Copies a link to the current page. Resolves false when the browser refused. */
   share(): Promise<boolean>;
+  /** Replaces every hotspot in the book. */
+  setHotspots(hotspots: Hotspot[]): void;
   readonly pageCount: number;
   currentPage(): number;
   orientation(): "portrait" | "landscape";
@@ -135,6 +145,8 @@ export function createFlipview(
   root.appendChild(stage);
   container.appendChild(root);
 
+  let hotspots: Hotspot[] = options.hotspots ?? [];
+
   // Page shells go in first and stay; only their canvases come and go.
   const shells: HTMLElement[] = [];
   for (let i = 0; i < source.pageCount; i++) {
@@ -159,8 +171,23 @@ export function createFlipview(
     num.textContent = String(i + 1);
     inner.appendChild(num);
     page.appendChild(inner);
+    placeHotspots(inner, i);
     book.appendChild(page);
     shells.push(page);
+  }
+
+  /**
+   * Hotspots go on the shell, not on the render, so they are there before a page
+   * is painted and survive it being evicted. Being real links and buttons, the
+   * engine's click forwarding already leaves them alone, so a click on one does
+   * not also start a page turn.
+   */
+  function placeHotspots(inner: HTMLElement, index: number): void {
+    renderHotspots(
+      inner,
+      hotspots.filter((spot) => spot.page === index),
+      { goTo: (i) => flip.flip(i), onUse: (spot, event) => options.onHotspot?.(spot, event) },
+    );
   }
 
   const startPortrait = wantPortrait();
@@ -497,6 +524,12 @@ export function createFlipview(
     pageCount: source.pageCount,
     currentPage: () => flip.getCurrentPageIndex(),
     orientation: () => flip.getOrientation(),
+    setHotspots(next) {
+      hotspots = next;
+      for (let i = 0; i < shells.length; i++) {
+        placeHotspots(shells[i].querySelector<HTMLElement>(".fv-page-inner")!, i);
+      }
+    },
     destroy() {
       observer.disconnect();
       calm?.removeEventListener?.("change", onCalmChange);

@@ -7,6 +7,7 @@ const EN = {
   last: "Last page",
   pageOf: "Page {page} of {total}",
   pageRole: "Page",
+  hotspot: "A link on this page",
   contents: "Contents",
   pages: "Pages",
   panel: "Contents and pages",

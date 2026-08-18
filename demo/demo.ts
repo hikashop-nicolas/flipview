@@ -29,6 +29,16 @@ rtl.checked = asked("rtl", false);
 const sound = document.getElementById("sound") as HTMLInputElement;
 sound.checked = asked("sound", false);
 const slow = document.getElementById("slow") as HTMLInputElement;
+const hotspots = document.getElementById("hotspots") as HTMLInputElement;
+hotspots.checked = asked("hotspots", false);
+
+// Three regions on the sample, one of each kind: a link out, a jump to another
+// page, and one the host answers itself the way a shop would.
+const SPOTS = [
+  { page: 0, x: 0.08, y: 0.1, width: 0.4, height: 0.12, href: "https://example.com/", target: "_blank", label: "Publisher's site" },
+  { page: 1, x: 0.55, y: 0.62, width: 0.34, height: 0.2, goToPage: 5, label: "Jump to page 6" },
+  { page: 2, x: 0.12, y: 0.3, width: 0.3, height: 0.22, label: "Blue kettle, 24 euros", data: { product: "42" } },
+];
 
 let book: FlipviewHandle | null = null;
 let load: (() => Promise<PageSource>) | null = null;
@@ -50,18 +60,25 @@ async function open(next?: () => Promise<PageSource>, startAt = 0) {
     share: true,
     downloadUrl: "./sample.pdf",
     flippingTime: slow.checked ? 3000 : 700,
+    hotspots: hotspots.checked ? SPOTS : [],
+    onHotspot: (spot) => {
+      if (!spot.data?.product) return;
+      status.textContent = `hotspot: product ${spot.data.product}`;
+      return false;
+    },
     onError: (err, i) => (status.textContent = `page ${i + 1}: ${String(err)}`.slice(0, 120)),
     onPageChange: (i) => (status.textContent = `page ${i + 1} / ${source.pageCount}`),
   });
   if (startAt > 0) book.goTo(startAt);
   if (asked("panel", false)) book.togglePanel();
+  document.querySelector(".fv-root")?.classList.toggle("fv-hotspots-shown", asked("showspots", false));
   status.textContent = `page ${(book.currentPage() ?? 0) + 1} / ${source.pageCount}`;
   // Test hook: the e2e suite and manual debugging drive the book through this.
   (window as unknown as { flipview: unknown }).flipview = book;
 }
 
 // Rebuilding keeps the reader where they were, so options can be compared in place.
-for (const box of [cover, hard, rtl, sound, slow]) {
+for (const box of [cover, hard, rtl, sound, slow, hotspots]) {
   box.addEventListener("change", () => void open(undefined, book?.currentPage() ?? 0));
 }
 
