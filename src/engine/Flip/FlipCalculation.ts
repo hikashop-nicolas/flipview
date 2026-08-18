@@ -1,11 +1,6 @@
-// @ts-nocheck
 // Vendored from StPageFlip (MIT, github.com/Nodlik/StPageFlip, master ab30ecc).
 // Upstream is unmaintained: 42 open issues, 4 open pull requests, and an issue
 // asking for it to be marked abandoned. We own it from here.
-//
-// Checking is off inside this tree only: upstream predates strictNullChecks and
-// turning it on cascades to ~150 sites, which would bury our own patches. Files
-// get tightened as we touch them.
 import { Helper } from '../Helper';
 import type { Point, Rect, RectPoints, Segment } from '../BasicTypes';
 import { FlipCorner, FlipDirection } from './Flip';
@@ -15,16 +10,16 @@ import { FlipCorner, FlipDirection } from './Flip';
  */
 export class FlipCalculation {
     /** Calculated rotation angle to flipping page */
-    private angle: number;
+    private angle!: number;
     /** Calculated position to flipping page */
-    private position: Point;
+    private position!: Point;
 
-    private rect: RectPoints;
+    private rect!: RectPoints;
 
     /** The point of intersection of the page with the borders of the book */
-    private topIntersectPoint: Point = null; // With top border
-    private sideIntersectPoint: Point = null; // With side border
-    private bottomIntersectPoint: Point = null; // With bottom border
+    private topIntersectPoint: Point | null = null; // With top border
+    private sideIntersectPoint: Point | null = null; // With side border
+    private bottomIntersectPoint: Point | null = null; // With bottom border
 
     private readonly pageWidth: number;
     private readonly pageHeight: number;
@@ -73,8 +68,8 @@ export class FlipCalculation {
      * 
      * @returns {Point[]} Polygon page
      */
-    public getFlippingClipArea(): Point[] {
-        const result = [];
+    public getFlippingClipArea(): (Point | null)[] {
+        const result: (Point | null)[] = [];
         let clipBottom = false;
 
         result.push(this.rect.topLeft);
@@ -102,8 +97,8 @@ export class FlipCalculation {
      * 
      * @returns {Point[]} Polygon page
      */
-    public getBottomClipArea(): Point[] {
-        const result = [];
+    public getBottomClipArea(): (Point | null)[] {
+        const result: (Point | null)[] = [];
 
         result.push(this.topIntersectPoint);
 
@@ -120,7 +115,7 @@ export class FlipCalculation {
             if (
                 Helper.GetDistanceBetweenTwoPoint(
                     this.sideIntersectPoint,
-                    this.topIntersectPoint
+                    this.topIntersectPoint!
                 ) >= 10
             )
                 result.push(this.sideIntersectPoint);
@@ -207,7 +202,7 @@ export class FlipCalculation {
     /**
      * Get the starting position of the shadow
      */
-    public getShadowStartPoint(): Point {
+    public getShadowStartPoint(): Point | null {
         if (this.corner === FlipCorner.TOP) {
             return this.topIntersectPoint;
         } else {
@@ -436,6 +431,6 @@ export class FlipCalculation {
                 ? this.sideIntersectPoint
                 : this.bottomIntersectPoint;
 
-        return [first, second];
+        return [first!, second!];
     }
 }

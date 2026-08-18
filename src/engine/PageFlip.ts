@@ -1,11 +1,6 @@
-// @ts-nocheck
 // Vendored from StPageFlip (MIT, github.com/Nodlik/StPageFlip, master ab30ecc).
 // Upstream is unmaintained: 42 open issues, 4 open pull requests, and an issue
 // asking for it to be marked abandoned. We own it from here.
-//
-// Checking is off inside this tree only: upstream predates strictNullChecks and
-// turning it on cascades to ~150 sites, which would bury our own patches. Files
-// get tightened as we touch them.
 import { PageCollection } from './Collection/PageCollection';
 import { ImagePageCollection } from './Collection/ImagePageCollection';
 import { HTMLPageCollection } from './Collection/HTMLPageCollection';
@@ -31,18 +26,18 @@ import './Style/stPageFlip.css';
  * @extends EventObject
  */
 export class PageFlip extends EventObject {
-    private mousePosition: Point;
+    private mousePosition!: Point;
     private isUserTouch = false;
     private isUserMove = false;
 
-    private readonly setting: FlipSetting = null;
+    private readonly setting: FlipSetting;
     private readonly block: HTMLElement; // Root HTML Element
 
-    private pages: PageCollection = null;
-    private flipController: Flip;
-    private render: Render;
+    private pages: PageCollection | null = null;
+    private flipController!: Flip;
+    private render!: Render;
 
-    private ui: UI;
+    private ui!: UI;
 
     /**
      * Create a new PageFlip instance
@@ -73,7 +68,7 @@ export class PageFlip extends EventObject {
      */
     public update(): void {
         this.render.update();
-        this.pages.show();
+        this.pages!.show();
     }
 
     /**
@@ -94,13 +89,13 @@ export class PageFlip extends EventObject {
 
         this.render.start();
 
-        this.pages.show(this.setting.startPage);
+        this.pages.show(this.setting!.startPage);
 
         // safari fix
         setTimeout(() => {
             this.ui.update();
             this.trigger('init', this, {
-                page: this.setting.startPage,
+                page: this.setting!.startPage,
                 mode: this.render.getOrientation(),
             });
         }, 1);
@@ -123,13 +118,13 @@ export class PageFlip extends EventObject {
 
         this.render.start();
 
-        this.pages.show(this.setting.startPage);
+        this.pages.show(this.setting!.startPage);
 
         // safari fix
         setTimeout(() => {
             this.ui.update();
             this.trigger('init', this, {
-                page: this.setting.startPage,
+                page: this.setting!.startPage,
                 mode: this.render.getOrientation(),
             });
         }, 1);
@@ -141,9 +136,9 @@ export class PageFlip extends EventObject {
      * @param {string[]} imagesHref - List of paths to images
      */
     public updateFromImages(imagesHref: string[]): void {
-        const current = this.pages.getCurrentPageIndex();
+        const current = this.pages!.getCurrentPageIndex();
 
-        this.pages.destroy();
+        this.pages!.destroy();
         this.pages = new ImagePageCollection(this, this.render, imagesHref);
         this.pages.load();
 
@@ -160,9 +155,9 @@ export class PageFlip extends EventObject {
      * @param {(NodeListOf<HTMLElement>|HTMLElement[])} items - List of pages as HTML Element
      */
     public updateFromHtml(items: NodeListOf<HTMLElement> | HTMLElement[]): void {
-        const current = this.pages.getCurrentPageIndex();
+        const current = this.pages!.getCurrentPageIndex();
 
-        this.pages.destroy();
+        this.pages!.destroy();
         this.pages = new HTMLPageCollection(this, this.render, this.ui.getDistElement(), items);
         this.pages.load();
         (this.ui as HTMLUI).updateItems(items);
@@ -179,7 +174,7 @@ export class PageFlip extends EventObject {
      * Clear pages from HTML (remove to initinalState)
      */
     public clear(): void {
-        this.pages.destroy();
+        this.pages!.destroy();
         (this.ui as HTMLUI).clear();
     }
 
@@ -187,14 +182,14 @@ export class PageFlip extends EventObject {
      * Turn to the previous page (without animation)
      */
     public turnToPrevPage(): void {
-        this.pages.showPrev();
+        this.pages!.showPrev();
     }
 
     /**
      * Turn to the next page (without animation)
      */
     public turnToNextPage(): void {
-        this.pages.showNext();
+        this.pages!.showNext();
     }
 
     /**
@@ -203,7 +198,7 @@ export class PageFlip extends EventObject {
      * @param {number} page - New page number
      */
     public turnToPage(page: number): void {
-        this.pages.show(page);
+        this.pages!.show(page);
     }
 
     /**
@@ -269,7 +264,7 @@ export class PageFlip extends EventObject {
      * @returns {number}
      */
     public getPageCount(): number {
-        return this.pages.getPageCount();
+        return this.pages!.getPageCount();
     }
 
     /**
@@ -278,7 +273,7 @@ export class PageFlip extends EventObject {
      * @returns {number}
      */
     public getCurrentPageIndex(): number {
-        return this.pages.getCurrentPageIndex();
+        return this.pages!.getCurrentPageIndex();
     }
 
     /**
@@ -288,7 +283,7 @@ export class PageFlip extends EventObject {
      * @returns {Page}
      */
     public getPage(pageIndex: number): Page {
-        return this.pages.getPage(pageIndex);
+        return this.pages!.getPage(pageIndex);
     }
 
     /**
@@ -360,7 +355,7 @@ export class PageFlip extends EventObject {
      * @returns {PageCollection}
      */
     public getPageCollection(): PageCollection {
-        return this.pages;
+        return this.pages!;
     }
 
     /**
@@ -381,7 +376,7 @@ export class PageFlip extends EventObject {
      * @param {boolean} isTouch - True if there was a touch event, not a mouse click
      */
     public userMove(pos: Point, isTouch: boolean): void {
-        if (!this.isUserTouch && !isTouch && this.setting.showPageCorners) {
+        if (!this.isUserTouch && !isTouch && this.setting!.showPageCorners) {
             this.flipController.showCorner(pos); // fold Page Corner
         } else if (this.isUserTouch) {
             if (Helper.GetDistanceBetweenTwoPoint(this.mousePosition, pos) > 5) {

@@ -1,11 +1,6 @@
-// @ts-nocheck
 // Vendored from StPageFlip (MIT, github.com/Nodlik/StPageFlip, master ab30ecc).
 // Upstream is unmaintained: 42 open issues, 4 open pull requests, and an issue
 // asking for it to be marked abandoned. We own it from here.
-//
-// Checking is off inside this tree only: upstream predates strictNullChecks and
-// turning it on cascades to ~150 sites, which would bury our own patches. Files
-// get tightened as we touch them.
 import { PageFlip } from '../PageFlip';
 
 /**
@@ -39,7 +34,7 @@ export abstract class EventObject {
         if (!this.events.has(eventName)) {
             this.events.set(eventName, [callback]);
         } else {
-            this.events.get(eventName).push(callback);
+            this.events.get(eventName)!.push(callback);
         }
 
         return this;
@@ -54,11 +49,11 @@ export abstract class EventObject {
         this.events.delete(event);
     }
 
-    protected trigger(eventName: string, app: PageFlip, data: DataType = null): void {
+    protected trigger(eventName: string, app: PageFlip, data: DataType | null = null): void {
         if (!this.events.has(eventName)) return;
 
-        for (const callback of this.events.get(eventName)) {
-            callback({ data, object: app });
+        for (const callback of this.events.get(eventName)!) {
+            callback({ data: data as DataType, object: app });
         }
     }
 }

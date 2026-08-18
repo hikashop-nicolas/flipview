@@ -1,11 +1,6 @@
-// @ts-nocheck
 // Vendored from StPageFlip (MIT, github.com/Nodlik/StPageFlip, master ab30ecc).
 // Upstream is unmaintained: 42 open issues, 4 open pull requests, and an issue
 // asking for it to be marked abandoned. We own it from here.
-//
-// Checking is off inside this tree only: upstream predates strictNullChecks and
-// turning it on cascades to ~150 sites, which would bury our own patches. Files
-// get tightened as we touch them.
 import { CanvasRender } from '../Render/CanvasRender';
 import { Page, PageDensity, PageOrientation } from './Page';
 import { Render } from '../Render/Render';
@@ -15,7 +10,7 @@ import type { Point } from '../BasicTypes';
  * Class representing a book page as an image on Canvas
  */
 export class ImagePage extends Page {
-    private readonly image: HTMLImageElement = null;
+    private readonly image: HTMLImageElement | null = null;
     private isLoad = false;
 
     private loadingAngle = 0;
@@ -27,7 +22,7 @@ export class ImagePage extends Page {
         this.image.src = href;
     }
 
-    public draw(tempDensity?: PageDensity): void {
+    public draw(_tempDensity?: PageDensity): void {
         const ctx = (this.render as CanvasRender).getContext();
 
         const pagePos = this.render.convertToGlobal(this.state.position);
@@ -35,13 +30,13 @@ export class ImagePage extends Page {
         const pageHeight = this.render.getRect().height;
 
         ctx.save();
-        ctx.translate(pagePos.x, pagePos.y);
+        ctx.translate(pagePos!.x, pagePos!.y);
         ctx.beginPath();
 
         for (let p of this.state.area) {
             if (p !== null) {
                 p = this.render.convertToGlobal(p);
-                ctx.lineTo(p.x - pagePos.x, p.y - pagePos.y);
+                ctx.lineTo(p!.x - pagePos!.x, p!.y - pagePos!.y);
             }
         }
 
@@ -52,7 +47,7 @@ export class ImagePage extends Page {
         if (!this.isLoad) {
             this.drawLoader(ctx, { x: 0, y: 0 }, pageWidth, pageHeight);
         } else {
-            ctx.drawImage(this.image, 0, 0, pageWidth, pageHeight);
+            ctx.drawImage(this.image!, 0, 0, pageWidth, pageHeight);
         }
 
         ctx.restore();
@@ -72,7 +67,7 @@ export class ImagePage extends Page {
         if (!this.isLoad) {
             this.drawLoader(ctx, { x, y }, pageWidth, pageHeight);
         } else {
-            ctx.drawImage(this.image, x, y, pageWidth, pageHeight);
+            ctx.drawImage(this.image!, x, y, pageWidth, pageHeight);
         }
     }
 
@@ -115,7 +110,7 @@ export class ImagePage extends Page {
 
     public load(): void {
         if (!this.isLoad)
-            this.image.onload = (): void => {
+            this.image!.onload = (): void => {
                 this.isLoad = true;
             };
     }

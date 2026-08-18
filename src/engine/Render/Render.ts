@@ -1,11 +1,6 @@
-// @ts-nocheck
 // Vendored from StPageFlip (MIT, github.com/Nodlik/StPageFlip, master ab30ecc).
 // Upstream is unmaintained: 42 open issues, 4 open pull requests, and an issue
 // asking for it to be marked abandoned. We own it from here.
-//
-// Checking is off inside this tree only: upstream predates strictNullChecks and
-// turning it on cascades to ~150 sites, which would bury our own patches. Files
-// get tightened as we touch them.
 import { PageFlip } from '../PageFlip';
 import type { Point, PageRect, RectPoints } from '../BasicTypes';
 import { FlipDirection } from '../Flip/Flip';
@@ -67,30 +62,30 @@ export abstract class Render {
     protected readonly app: PageFlip;
 
     /** Left static book page */
-    protected leftPage: Page = null;
+    protected leftPage: Page | null = null;
     /** Right static book page */
-    protected rightPage: Page = null;
+    protected rightPage: Page | null = null;
 
     /** Page currently flipping */
-    protected flippingPage: Page = null;
+    protected flippingPage: Page | null = null;
     /** Next page at the time of flipping */
-    protected bottomPage: Page = null;
+    protected bottomPage: Page | null = null;
 
     /** Current flipping direction */
-    protected direction: FlipDirection = null;
+    protected direction: FlipDirection | null = null;
     /** Current book orientation */
-    protected orientation: Orientation = null;
+    protected orientation: Orientation | null = null;
     /** Сurrent state of the shadows */
-    protected shadow: Shadow = null;
+    protected shadow: Shadow | null = null;
     /** Сurrent animation process */
-    protected animation: AnimationProcess = null;
+    protected animation: AnimationProcess | null = null;
 
     /** flipview: handle of the running render loop, so destroy() can cancel it. */
     private frame: number | null = null;
     /** Page borders while flipping */
-    protected pageRect: RectPoints = null;
+    protected pageRect: RectPoints | null = null;
     /** Current book area */
-    private boundsRect: PageRect = null;
+    private boundsRect: PageRect | null = null;
 
     /** Timer started from start of rendering */
     protected timer = 0;
@@ -335,7 +330,7 @@ export abstract class Render {
      * Get current flipping direction
      */
     public getDirection(): FlipDirection {
-        return this.direction;
+        return this.direction!;
     }
 
     /**
@@ -344,7 +339,7 @@ export abstract class Render {
     public getRect(): PageRect {
         if (this.boundsRect === null) this.calculateBoundsRect();
 
-        return this.boundsRect;
+        return this.boundsRect!;
     }
 
     /**
@@ -358,7 +353,7 @@ export abstract class Render {
      * Get current book orientation
      */
     public getOrientation(): Orientation {
-        return this.orientation;
+        return this.orientation!;
     }
 
     /**
@@ -384,7 +379,7 @@ export abstract class Render {
      *
      * @param page
      */
-    public setRightPage(page: Page): void {
+    public setRightPage(page: Page | null): void {
         if (page !== null) page.setOrientation(PageOrientation.RIGHT);
 
         this.rightPage = page;
@@ -394,7 +389,7 @@ export abstract class Render {
      * Set left static book page
      * @param page
      */
-    public setLeftPage(page: Page): void {
+    public setLeftPage(page: Page | null): void {
         if (page !== null) page.setOrientation(PageOrientation.LEFT);
 
         this.leftPage = page;
@@ -404,7 +399,7 @@ export abstract class Render {
      * Set next page at the time of flipping
      * @param page
      */
-    public setBottomPage(page: Page): void {
+    public setBottomPage(page: Page | null): void {
         if (page !== null)
             page.setOrientation(
                 this.direction === FlipDirection.BACK ? PageOrientation.LEFT : PageOrientation.RIGHT
@@ -418,7 +413,7 @@ export abstract class Render {
      *
      * @param page
      */
-    public setFlippingPage(page: Page): void {
+    public setFlippingPage(page: Page | null): void {
         if (page !== null)
             page.setOrientation(
                 this.direction === FlipDirection.FORWARD &&
@@ -458,7 +453,7 @@ export abstract class Render {
      * @returns {Point} Coordinates relative to the work page
      */
     public convertToPage(pos: Point, direction?: FlipDirection): Point {
-        if (!direction) direction = this.direction;
+        if (!direction) direction = this.direction ?? undefined;
 
         const rect = this.getRect();
         const x =
@@ -480,8 +475,8 @@ export abstract class Render {
      *
      * @returns {Point} Global coordinates relative to the window
      */
-    public convertToGlobal(pos: Point, direction?: FlipDirection): Point {
-        if (!direction) direction = this.direction;
+    public convertToGlobal(pos: Point | null, direction?: FlipDirection): Point | null {
+        if (!direction) direction = this.direction ?? undefined;
 
         if (pos == null) return null;
 
@@ -507,13 +502,13 @@ export abstract class Render {
      * @returns {RectPoints} Coordinates of the corners of the rectangle relative to the window
      */
     public convertRectToGlobal(rect: RectPoints, direction?: FlipDirection): RectPoints {
-        if (!direction) direction = this.direction;
+        if (!direction) direction = this.direction ?? undefined;
 
         return {
-            topLeft: this.convertToGlobal(rect.topLeft, direction),
-            topRight: this.convertToGlobal(rect.topRight, direction),
-            bottomLeft: this.convertToGlobal(rect.bottomLeft, direction),
-            bottomRight: this.convertToGlobal(rect.bottomRight, direction),
+            topLeft: this.convertToGlobal(rect.topLeft, direction)!,
+            topRight: this.convertToGlobal(rect.topRight, direction)!,
+            bottomLeft: this.convertToGlobal(rect.bottomLeft, direction)!,
+            bottomRight: this.convertToGlobal(rect.bottomRight, direction)!,
         };
     }
 }

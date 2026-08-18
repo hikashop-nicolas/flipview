@@ -1,11 +1,6 @@
-// @ts-nocheck
 // Vendored from StPageFlip (MIT, github.com/Nodlik/StPageFlip, master ab30ecc).
 // Upstream is unmaintained: 42 open issues, 4 open pull requests, and an issue
 // asking for it to be marked abandoned. We own it from here.
-//
-// Checking is off inside this tree only: upstream predates strictNullChecks and
-// turning it on cascades to ~150 sites, which would bury our own patches. Files
-// get tightened as we touch them.
 import { PageFlip } from '../PageFlip';
 import type { Point } from '../BasicTypes';
 import { SizeType } from '../Settings';
@@ -26,9 +21,9 @@ export abstract class UI {
 
     protected readonly app: PageFlip;
     protected readonly wrapper: HTMLElement;
-    protected distElement: HTMLElement;
+    protected distElement!: HTMLElement;
 
-    private touchPoint: SwipeData = null;
+    private touchPoint: SwipeData | null = null;
     private readonly swipeTimeout = 250;
     private readonly swipeDistance: number;
 
@@ -50,7 +45,7 @@ export abstract class UI {
         // Add first wrapper
         inBlock.insertAdjacentHTML('afterbegin', '<div class="stf__wrapper"></div>');
 
-        this.wrapper = inBlock.querySelector('.stf__wrapper');
+        this.wrapper = inBlock.querySelector('.stf__wrapper')!;
 
         this.app = app;
 
@@ -175,7 +170,7 @@ export abstract class UI {
         };
     }
 
-    private checkTarget(targer: EventTarget): boolean {
+    private checkTarget(targer: EventTarget | null): boolean {
         if (!this.app.getSettings().clickEventForward) return true;
 
         if (['a', 'button'].includes((targer as HTMLElement).tagName.toLowerCase())) {

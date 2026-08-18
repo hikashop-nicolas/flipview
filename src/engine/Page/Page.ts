@@ -1,11 +1,6 @@
-// @ts-nocheck
 // Vendored from StPageFlip (MIT, github.com/Nodlik/StPageFlip, master ab30ecc).
 // Upstream is unmaintained: 42 open issues, 4 open pull requests, and an issue
 // asking for it to be marked abandoned. We own it from here.
-//
-// Checking is off inside this tree only: upstream predates strictNullChecks and
-// turning it on cascades to ~150 sites, which would bury our own patches. Files
-// get tightened as we touch them.
 import { Render } from '../Render/Render';
 import type { Point } from '../BasicTypes';
 
@@ -17,7 +12,7 @@ export interface PageState {
     angle: number;
 
     /** Page scope */
-    area: Point[];
+    area: (Point | null)[];
 
     /** Page position */
     position: Point;
@@ -52,7 +47,7 @@ export abstract class Page {
     protected render: Render;
 
     /** Page Orientation */
-    protected orientation: PageOrientation;
+    protected orientation!: PageOrientation;
 
     /** Density at creation */
     protected createdDensity: PageDensity;
@@ -135,7 +130,7 @@ export abstract class Page {
      * 
      * @param {Point[]} area 
      */
-    public setArea(area: Point[]): void {
+    public setArea(area: (Point | null)[]): void {
         this.state.area = area;
     }
 
@@ -188,7 +183,7 @@ export abstract class Page {
         return this.state.hardAngle;
     }
 
-    public abstract newTemporaryCopy(): Page;
-    public abstract getTemporaryCopy(): Page;
+    public abstract newTemporaryCopy(): Page | null;
+    public abstract getTemporaryCopy(): Page | null;
     public abstract hideTemporaryCopy(): void;
 }

@@ -1,11 +1,6 @@
-// @ts-nocheck
 // Vendored from StPageFlip (MIT, github.com/Nodlik/StPageFlip, master ab30ecc).
 // Upstream is unmaintained: 42 open issues, 4 open pull requests, and an issue
 // asking for it to be marked abandoned. We own it from here.
-//
-// Checking is off inside this tree only: upstream predates strictNullChecks and
-// turning it on cascades to ~150 sites, which would bury our own patches. Files
-// get tightened as we touch them.
 import { Page, PageDensity, PageOrientation } from './Page';
 import { Render } from '../Render/Render';
 import { Helper } from '../Helper';
@@ -17,11 +12,10 @@ import type { Point } from '../BasicTypes';
  */
 export class HTMLPage extends Page {
     private readonly element: HTMLElement;
-    private copiedElement: HTMLElement = null;
+    private copiedElement: HTMLElement | null = null;
 
-    private temporaryCopy: Page = null;
+    private temporaryCopy: Page | null = null;
 
-    private isLoad = false;
 
     constructor(render: Render, element: HTMLElement, density: PageDensity) {
         super(render, density);
@@ -31,14 +25,14 @@ export class HTMLPage extends Page {
         this.element.classList.add('--' + density);
     }
 
-    public newTemporaryCopy(): Page {
+    public newTemporaryCopy(): Page | null {
         if (this.nowDrawingDensity === PageDensity.HARD) {
             return this;
         }
 
         if (this.temporaryCopy === null) {
             this.copiedElement = this.element.cloneNode(true) as HTMLElement;
-            this.element.parentElement.appendChild(this.copiedElement);
+            this.element.parentElement!.appendChild(this.copiedElement);
 
             this.temporaryCopy = new HTMLPage(
                 this.render,
@@ -50,13 +44,13 @@ export class HTMLPage extends Page {
         return this.getTemporaryCopy();
     }
 
-    public getTemporaryCopy(): Page {
+    public getTemporaryCopy(): Page | null {
         return this.temporaryCopy;
     }
 
     public hideTemporaryCopy(): void {
         if (this.temporaryCopy !== null) {
-            this.copiedElement.remove();
+            this.copiedElement!.remove();
             this.copiedElement = null;
             this.temporaryCopy = null;
         }
@@ -82,7 +76,7 @@ export class HTMLPage extends Page {
 
         density === PageDensity.HARD
             ? this.drawHard(commonStyle)
-            : this.drawSoft(pagePos, commonStyle);
+            : this.drawSoft(pagePos!, commonStyle);
     }
 
     private drawHard(commonStyle = ''): void {
@@ -169,7 +163,6 @@ export class HTMLPage extends Page {
     }
 
     public load(): void {
-        this.isLoad = true;
     }
 
     public setOrientation(orientation: PageOrientation): void {

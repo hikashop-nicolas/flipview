@@ -1,11 +1,6 @@
-// @ts-nocheck
 // Vendored from StPageFlip (MIT, github.com/Nodlik/StPageFlip, master ab30ecc).
 // Upstream is unmaintained: 42 open issues, 4 open pull requests, and an issue
 // asking for it to be marked abandoned. We own it from here.
-//
-// Checking is off inside this tree only: upstream predates strictNullChecks and
-// turning it on cascades to ~150 sites, which would bury our own patches. Files
-// get tightened as we touch them.
 import { Orientation, Render } from './Render';
 import { PageFlip } from '../PageFlip';
 import { FlipDirection } from '../Flip/Flip';
@@ -22,12 +17,10 @@ export class HTMLRender extends Render {
     private readonly element: HTMLElement;
 
     /** Pages List as HTMLElements */
-    private readonly items: NodeListOf<HTMLElement> | HTMLElement[];
-
-    private outerShadow: HTMLElement = null;
-    private innerShadow: HTMLElement = null;
-    private hardShadow: HTMLElement = null;
-    private hardInnerShadow: HTMLElement = null;
+    private outerShadow: HTMLElement | null = null;
+    private innerShadow: HTMLElement | null = null;
+    private hardShadow: HTMLElement | null = null;
+    private hardInnerShadow: HTMLElement | null = null;
 
     /**
      * @constructor
@@ -62,10 +55,10 @@ export class HTMLRender extends Render {
     public clearShadow(): void {
         super.clearShadow();
 
-        this.outerShadow.style.cssText = 'display: none';
-        this.innerShadow.style.cssText = 'display: none';
-        this.hardShadow.style.cssText = 'display: none';
-        this.hardInnerShadow.style.cssText = 'display: none';
+        this.outerShadow!.style.cssText = 'display: none';
+        this.innerShadow!.style.cssText = 'display: none';
+        this.hardShadow!.style.cssText = 'display: none';
+        this.hardInnerShadow!.style.cssText = 'display: none';
     }
 
     public reload(): void {
@@ -83,7 +76,7 @@ export class HTMLRender extends Render {
         const rect = this.getRect();
 
         const progress =
-            this.shadow.progress > 100 ? 200 - this.shadow.progress : this.shadow.progress;
+            this.shadow!.progress > 100 ? 200 - this.shadow!.progress : this.shadow!.progress;
 
         let innerShadowSize = ((100 - progress) * (2.5 * rect.pageWidth)) / 100 + 20;
         if (innerShadowSize > rect.pageWidth) innerShadowSize = rect.pageWidth;
@@ -94,19 +87,19 @@ export class HTMLRender extends Render {
             width: ${innerShadowSize}px;
             height: ${rect.height}px;
             background: linear-gradient(to right,
-                rgba(0, 0, 0, ${(this.shadow.opacity * progress) / 100}) 5%,
+                rgba(0, 0, 0, ${(this.shadow!.opacity * progress) / 100}) 5%,
                 rgba(0, 0, 0, 0) 100%);
             left: ${rect.left + rect.width / 2}px;
             transform-origin: 0 0;
         `;
 
         newStyle +=
-            (this.getDirection() === FlipDirection.FORWARD && this.shadow.progress > 100) ||
-            (this.getDirection() === FlipDirection.BACK && this.shadow.progress <= 100)
+            (this.getDirection() === FlipDirection.FORWARD && this.shadow!.progress > 100) ||
+            (this.getDirection() === FlipDirection.BACK && this.shadow!.progress <= 100)
                 ? `transform: translate3d(0, 0, 0);`
                 : `transform: translate3d(0, 0, 0) rotateY(180deg);`;
 
-        this.hardInnerShadow.style.cssText = newStyle;
+        this.hardInnerShadow!.style.cssText = newStyle;
     }
 
     /**
@@ -116,7 +109,7 @@ export class HTMLRender extends Render {
         const rect = this.getRect();
 
         const progress =
-            this.shadow.progress > 100 ? 200 - this.shadow.progress : this.shadow.progress;
+            this.shadow!.progress > 100 ? 200 - this.shadow!.progress : this.shadow!.progress;
 
         let shadowSize = ((100 - progress) * (2.5 * rect.pageWidth)) / 100 + 20;
         if (shadowSize > rect.pageWidth) shadowSize = rect.pageWidth;
@@ -127,19 +120,19 @@ export class HTMLRender extends Render {
             width: ${shadowSize}px;
             height: ${rect.height}px;
             background: linear-gradient(to left, rgba(0, 0, 0, ${
-                this.shadow.opacity
+                this.shadow!.opacity
             }) 5%, rgba(0, 0, 0, 0) 100%);
             left: ${rect.left + rect.width / 2}px;
             transform-origin: 0 0;
         `;
 
         newStyle +=
-            (this.getDirection() === FlipDirection.FORWARD && this.shadow.progress > 100) ||
-            (this.getDirection() === FlipDirection.BACK && this.shadow.progress <= 100)
+            (this.getDirection() === FlipDirection.FORWARD && this.shadow!.progress > 100) ||
+            (this.getDirection() === FlipDirection.BACK && this.shadow!.progress <= 100)
                 ? `transform: translate3d(0, 0, 0) rotateY(180deg);`
                 : `transform: translate3d(0, 0, 0);`;
 
-        this.hardShadow.style.cssText = newStyle;
+        this.hardShadow!.style.cssText = newStyle;
     }
 
     /**
@@ -148,21 +141,21 @@ export class HTMLRender extends Render {
     private drawInnerShadow(): void {
         const rect = this.getRect();
 
-        const innerShadowSize = (this.shadow.width * 3) / 4;
+        const innerShadowSize = (this.shadow!.width * 3) / 4;
         const shadowTranslate = this.getDirection() === FlipDirection.FORWARD ? innerShadowSize : 0;
 
         const shadowDirection =
             this.getDirection() === FlipDirection.FORWARD ? 'to left' : 'to right';
 
-        const shadowPos = this.convertToGlobal(this.shadow.pos);
+        const shadowPos = this.convertToGlobal(this.shadow!.pos);
 
-        const angle = this.shadow.angle + (3 * Math.PI) / 2;
+        const angle = this.shadow!.angle + (3 * Math.PI) / 2;
 
         const clip = [
-            this.pageRect.topLeft,
-            this.pageRect.topRight,
-            this.pageRect.bottomRight,
-            this.pageRect.bottomLeft,
+            this.pageRect!.topLeft,
+            this.pageRect!.topRight,
+            this.pageRect!.bottomRight,
+            this.pageRect!.bottomLeft,
         ];
 
         let polygon = 'polygon( ';
@@ -170,12 +163,12 @@ export class HTMLRender extends Render {
             let g =
                 this.getDirection() === FlipDirection.BACK
                     ? {
-                          x: -p.x + this.shadow.pos.x,
-                          y: p.y - this.shadow.pos.y,
+                          x: -p.x + this.shadow!.pos.x,
+                          y: p.y - this.shadow!.pos.y,
                       }
                     : {
-                          x: p.x - this.shadow.pos.x,
-                          y: p.y - this.shadow.pos.y,
+                          x: p.x - this.shadow!.pos.x,
+                          y: p.y - this.shadow!.pos.y,
                       };
 
             g = Helper.GetRotatedPoint(g, { x: shadowTranslate, y: 100 }, angle);
@@ -191,19 +184,19 @@ export class HTMLRender extends Render {
             width: ${innerShadowSize}px;
             height: ${rect.height * 2}px;
             background: linear-gradient(${shadowDirection},
-                rgba(0, 0, 0, ${this.shadow.opacity}) 5%,
+                rgba(0, 0, 0, ${this.shadow!.opacity}) 5%,
                 rgba(0, 0, 0, 0.05) 15%,
-                rgba(0, 0, 0, ${this.shadow.opacity}) 35%,
+                rgba(0, 0, 0, ${this.shadow!.opacity}) 35%,
                 rgba(0, 0, 0, 0) 100%);
             transform-origin: ${shadowTranslate}px 100px;
-            transform: translate3d(${shadowPos.x - shadowTranslate}px, ${
-            shadowPos.y - 100
+            transform: translate3d(${shadowPos!.x - shadowTranslate}px, ${
+            shadowPos!.y - 100
         }px, 0) rotate(${angle}rad);
             clip-path: ${polygon};
             -webkit-clip-path: ${polygon};
         `;
 
-        this.innerShadow.style.cssText = newStyle;
+        this.innerShadow!.style.cssText = newStyle;
     }
 
     /**
@@ -212,10 +205,10 @@ export class HTMLRender extends Render {
     private drawOuterShadow(): void {
         const rect = this.getRect();
 
-        const shadowPos = this.convertToGlobal({ x: this.shadow.pos.x, y: this.shadow.pos.y });
+        const shadowPos = this.convertToGlobal({ x: this.shadow!.pos.x, y: this.shadow!.pos.y });
 
-        const angle = this.shadow.angle + (3 * Math.PI) / 2;
-        const shadowTranslate = this.getDirection() === FlipDirection.BACK ? this.shadow.width : 0;
+        const angle = this.shadow!.angle + (3 * Math.PI) / 2;
+        const shadowTranslate = this.getDirection() === FlipDirection.BACK ? this.shadow!.width : 0;
 
         const shadowDirection =
             this.getDirection() === FlipDirection.FORWARD ? 'to right' : 'to left';
@@ -233,12 +226,12 @@ export class HTMLRender extends Render {
                 let g =
                     this.getDirection() === FlipDirection.BACK
                         ? {
-                              x: -p.x + this.shadow.pos.x,
-                              y: p.y - this.shadow.pos.y,
+                              x: -p.x + this.shadow!.pos.x,
+                              y: p.y - this.shadow!.pos.y,
                           }
                         : {
-                              x: p.x - this.shadow.pos.x,
-                              y: p.y - this.shadow.pos.y,
+                              x: p.x - this.shadow!.pos.x,
+                              y: p.y - this.shadow!.pos.y,
                           };
 
                 g = Helper.GetRotatedPoint(g, { x: shadowTranslate, y: 100 }, angle);
@@ -253,20 +246,20 @@ export class HTMLRender extends Render {
         const newStyle = `
             display: block;
             z-index: ${(this.getSettings().startZIndex + 10).toString(10)};
-            width: ${this.shadow.width}px;
+            width: ${this.shadow!.width}px;
             height: ${rect.height * 2}px;
             background: linear-gradient(${shadowDirection}, rgba(0, 0, 0, ${
-            this.shadow.opacity
+            this.shadow!.opacity
         }), rgba(0, 0, 0, 0));
             transform-origin: ${shadowTranslate}px 100px;
-            transform: translate3d(${shadowPos.x - shadowTranslate}px, ${
-            shadowPos.y - 100
+            transform: translate3d(${shadowPos!.x - shadowTranslate}px, ${
+            shadowPos!.y - 100
         }px, 0) rotate(${angle}rad);
             clip-path: ${polygon};
             -webkit-clip-path: ${polygon};
         `;
 
-        this.outerShadow.style.cssText = newStyle;
+        this.outerShadow!.style.cssText = newStyle;
     }
 
     /**
@@ -327,7 +320,7 @@ export class HTMLRender extends Render {
                 this.getSettings().startZIndex + 3
             ).toString(10);
 
-            this.bottomPage.draw(tempDensity);
+            this.bottomPage!.draw(tempDensity ?? undefined);
         }
     }
 
