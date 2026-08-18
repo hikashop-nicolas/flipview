@@ -84,6 +84,9 @@ export abstract class Render {
     protected shadow: Shadow = null;
     /** Сurrent animation process */
     protected animation: AnimationProcess = null;
+
+    /** flipview: handle of the running render loop, so destroy() can cancel it. */
+    private frame: number | null = null;
     /** Page borders while flipping */
     protected pageRect: RectPoints = null;
     /** Current book area */
@@ -150,10 +153,22 @@ export abstract class Render {
 
         const loop = (timer: number): void => {
             this.render(timer);
-            requestAnimationFrame(loop);
+            this.frame = requestAnimationFrame(loop);
         };
 
-        requestAnimationFrame(loop);
+        this.frame = requestAnimationFrame(loop);
+    }
+
+    /**
+     * flipview: stop the render loop. Upstream never cancels it, so every destroyed
+     * book kept a requestAnimationFrame running for the life of the page. See
+     * upstream issue #71.
+     */
+    public stop(): void {
+        if (this.frame !== null) {
+            cancelAnimationFrame(this.frame);
+            this.frame = null;
+        }
     }
 
     /**

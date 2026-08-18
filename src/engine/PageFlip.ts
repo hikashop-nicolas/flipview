@@ -62,6 +62,8 @@ export class PageFlip extends EventObject {
      * Destructor. Remove a root HTML element and all event handlers
      */
     public destroy(): void {
+        // flipview: stop the render loop first, upstream issue #71.
+        this.render.stop();
         this.ui.destroy();
         this.block.remove();
     }

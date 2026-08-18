@@ -99,8 +99,12 @@ export class HTMLPage extends Page {
                 -webkit-clip-path: none;
             ` +
             (this.orientation === PageOrientation.LEFT
-                ? `transform-origin: ${this.render.getRect().pageWidth}px 0; 
-                   transform: translate3d(0, 0, 0) rotateY(${angle}deg);`
+                ? // flipview: was translate3d(0, 0, 0), which pins a left-hand hard page
+                  // to the block's left edge instead of the book's, so any block wider
+                  // than the spread opened a band down the middle. The right-hand branch
+                  // below already adds rect.left through `pos`.
+                  `transform-origin: ${this.render.getRect().pageWidth}px 0; 
+                   transform: translate3d(${this.render.getRect().left}px, 0, 0) rotateY(${angle}deg);`
                 : `transform-origin: 0 0; 
                    transform: translate3d(${pos}px, 0, 0) rotateY(${angle}deg);`);
 

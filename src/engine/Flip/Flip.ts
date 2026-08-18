@@ -262,7 +262,9 @@ export class Flip {
      */
     public flipPrev(corner: FlipCorner): void {
         this.flip({
-            x: 10,
+            // flipview: was x: 10, which assumes the book starts at the block's left
+            // edge. Upstream PR #30, unmerged. flipNext already accounts for it.
+            x: this.render.getRect().left + 10,
             y: corner === FlipCorner.TOP ? 1 : this.render.getRect().height - 2,
         });
     }
