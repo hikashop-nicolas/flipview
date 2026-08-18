@@ -242,15 +242,33 @@ export function createFlipview(
     for (const i of windowAround(index)) void renderPage(i);
   }
 
-  /** Size one page for the given orientation, keeping the spread inside the viewport. */
+  /**
+   * The element the book is filling, when it is filling one: the fullscreen root
+   * or the lightbox overlay. Both have a height of their own that does not depend
+   * on the book, which is what makes them safe to measure.
+   */
+  function filler(): HTMLElement | null {
+    if (document.fullscreenElement === root) return root;
+    return root.closest<HTMLElement>(".fv-lightbox");
+  }
+
+  /** Size one page for the given orientation, keeping the spread inside the room. */
   function fit(portrait: boolean): { width: number; height: number } {
     const available = stage.clientWidth || 800;
-    const top = stage.getBoundingClientRect().top;
     const chrome = (root.querySelector(".fv-toolbar")?.clientHeight ?? 0) + 24;
-    const room = window.innerHeight - Math.max(top, 0) - chrome;
+    const filling = filler();
+
+    // Never measure from the stage's own top. The stage is centred vertically, so
+    // its top moves as the book resizes, and reading it back shrinks the book a
+    // little more on every pass until it settles far too small. The container's
+    // top is fixed by the page above it, and a filling element has a height of its
+    // own, so both are stable to measure against.
+    const room = filling
+      ? filling.clientHeight - chrome
+      : window.innerHeight - Math.max(container.getBoundingClientRect().top, 0) - chrome;
+
     // The cap exists to fit a book into a page's layout. Filling the screen is
     // the one moment it should not apply.
-    const filling = document.fullscreenElement === root || root.closest(".fv-lightbox") !== null;
     const capped = opt.maxHeight && !filling ? Math.min(room, opt.maxHeight) : room;
     const maxHeight = Math.max(320, capped);
     let width = portrait ? available : Math.floor(available / 2);
