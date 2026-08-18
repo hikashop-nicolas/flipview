@@ -22,3 +22,13 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm run build:demo
+
+      - name: Accessibility
+        working-directory: tools/a11y
+        env:
+          # The runner image ships Chrome; the scanner drives it rather than
+          # downloading one of its own.
+          CHROME_PATH: /usr/bin/google-chrome
+        run: |
+          npm install --no-audit --no-fund
+          node scan.js

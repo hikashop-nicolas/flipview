@@ -198,20 +198,22 @@
   padding: 0 6px;
 }
 
+/* A solid field with dark text. White on a translucent tint over the bar came out
+   at 3.19 against WCAG's 4.5 for text, and a page number is text a reader edits. */
 .fv-page-input {
   width: 3.2em;
   height: 26px;
   padding: 0 4px;
   border: 0;
   border-radius: 5px;
-  background: var(--fv-bar-hover, rgba(255, 255, 255, 0.22));
-  color: inherit;
+  background: var(--fv-field-bg, rgba(255, 255, 255, 0.94));
+  color: var(--fv-field-fg, #1b2733);
   font: inherit;
   text-align: center;
 }
 
+/* Full strength: dimming this to 0.85 dropped it to 3.76. */
 .fv-page-total {
-  opacity: 0.85;
   white-space: nowrap;
 }
 

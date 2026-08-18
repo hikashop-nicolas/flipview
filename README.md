@@ -95,6 +95,7 @@ not declared on the root element, so a page can set them on any ancestor:
 ```
 
 Tokens: `--fv-page-bg`, `--fv-page-fg`, `--fv-cover-bg`, `--fv-bar-bg`,
-`--fv-bar-fg`, `--fv-bar-hover`, `--fv-bar-height`, `--fv-radius`, `--fv-gap`.
+`--fv-bar-fg`, `--fv-bar-hover`, `--fv-field-bg`, `--fv-field-fg`, `--fv-bar-height`,
+`--fv-radius`, `--fv-gap`.
 
 MIT.

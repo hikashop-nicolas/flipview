@@ -1,0 +1,15 @@
+{
+  "name": "flipview-a11y",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Runs axe-core against the states a reader can put the viewer in. Development tooling, never shipped in the library.",
+  "license": "MIT",
+  "scripts": {
+    "scan": "node scan.js",
+    "update-expected": "node scan.js --update-expected"
+  },
+  "dependencies": {
+    "axe-core": "^4.10.3",
+    "puppeteer-core": "^24.10.0"
+  }
+}

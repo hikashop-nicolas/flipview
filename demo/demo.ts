@@ -4,13 +4,21 @@ import "../src/flipview.css";
 import { createFlipview, createPdfSource, createImageSource, openLightbox } from "../src/index";
 import type { FlipviewHandle, PageSource } from "../src/index";
 
+// Query parameters drive the demo as well as the checkboxes, so a state can be
+// linked to, and so the accessibility scan can ask for one without clicking.
+const wanted = new URLSearchParams(location.search);
+const asked = (name: string, fallback: boolean): boolean =>
+  wanted.has(name) ? wanted.get(name) !== "0" : fallback;
+
 const stage = document.getElementById("stage")!;
 const status = document.getElementById("status")!;
 const cover = document.getElementById("cover") as HTMLInputElement;
-cover.checked = true;
+cover.checked = asked("cover", true);
 const hard = document.getElementById("hard") as HTMLInputElement;
 const rtl = document.getElementById("rtl") as HTMLInputElement;
+rtl.checked = asked("rtl", false);
 const sound = document.getElementById("sound") as HTMLInputElement;
+sound.checked = asked("sound", false);
 const slow = document.getElementById("slow") as HTMLInputElement;
 
 let book: FlipviewHandle | null = null;
@@ -25,6 +33,7 @@ async function open(next?: () => Promise<PageSource>, startAt = 0) {
   const source = await load();
   book = createFlipview(stage, source, {
     deepLink: true,
+    mode: wanted.get("mode") === "single" ? "single" : "auto",
     showCover: cover.checked,
     hardCovers: hard.checked,
     rtl: rtl.checked,

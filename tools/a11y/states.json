@@ -1,0 +1,54 @@
+{
+	"comment": [
+		"The states a reader can put the viewer in, rather than a list of pages: a",
+		"flipbook is one page whose accessibility changes as it is used. Each state",
+		"names the demo settings it needs and the steps that reach it.",
+		"",
+		"The demo is built and served from demo-dist by the scanner, so a run needs",
+		"nothing else running and works the same in CI as it does here."
+	],
+	"chrome": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+	"tags": ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"],
+	"states": [
+		{
+			"id": "inline",
+			"comment": "The book as a page first shows it.",
+			"query": ""
+		},
+		{
+			"id": "turned",
+			"comment": "After a page turn: a different spread, and a rendered canvas.",
+			"query": "",
+			"steps": [{ "click": ".fv-btn-next" }, { "wait": 900 }]
+		},
+		{
+			"id": "single",
+			"comment": "One page at a time, the layout a phone gets.",
+			"query": "mode=single",
+			"viewport": { "width": 420, "height": 900 }
+		},
+		{
+			"id": "rtl",
+			"comment": "Right to left, where the controls keep their meaning but swap sides.",
+			"query": "rtl=1"
+		},
+		{
+			"id": "lightbox",
+			"comment": "The book over the page: a dialog, and the hardest state to get right.",
+			"query": "",
+			"steps": [{ "click": "#light" }, { "wait": 1200 }]
+		},
+		{
+			"id": "fullscreen",
+			"comment": "Filling the screen. The click is a real one, so the browser allows it.",
+			"query": "",
+			"steps": [{ "click": ".fv-btn-fullscreen" }, { "wait": 900 }]
+		},
+		{
+			"id": "shared",
+			"comment": "After the share button reports back, since it adds a live region.",
+			"query": "",
+			"steps": [{ "click": ".fv-btn-share" }, { "wait": 700 }]
+		}
+	]
+}
