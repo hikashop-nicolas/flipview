@@ -23,7 +23,10 @@ export interface FlipviewOptions {
   pageCorners?: boolean;
   /** Below this container width in px, 'auto' mode shows one page at a time. */
   breakpoint?: number;
-  /** Cap the book's height in px. Without it the book fills the viewport. */
+  /**
+   * Cap the book's height in px, so it fits the space a page gave it. Ignored in
+   * fullscreen and in a lightbox, where the whole point is the space.
+   */
   maxHeight?: number;
   /** false hides the toolbar entirely; an object turns individual buttons off. */
   toolbar?: boolean | ToolbarButtons;
@@ -245,7 +248,10 @@ export function createFlipview(
     const top = stage.getBoundingClientRect().top;
     const chrome = (root.querySelector(".fv-toolbar")?.clientHeight ?? 0) + 24;
     const room = window.innerHeight - Math.max(top, 0) - chrome;
-    const capped = opt.maxHeight ? Math.min(room, opt.maxHeight) : room;
+    // The cap exists to fit a book into a page's layout. Filling the screen is
+    // the one moment it should not apply.
+    const filling = document.fullscreenElement === root || root.closest(".fv-lightbox") !== null;
+    const capped = opt.maxHeight && !filling ? Math.min(room, opt.maxHeight) : room;
     const maxHeight = Math.max(320, capped);
     let width = portrait ? available : Math.floor(available / 2);
     let height = Math.round(width / source.aspect);

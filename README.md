@@ -60,7 +60,7 @@ sources need nothing.
 | `breakpoint` | `700` | container width in px below which `auto` shows one page |
 | `flippingTime` | `700` | flip animation duration in ms |
 | `cacheSize` | `8` | how many rendered page canvases to keep |
-| `maxHeight` | none | cap the book's height in px, otherwise it fills the viewport |
+| `maxHeight` | none | cap the book's height in px. Ignored in fullscreen and in a lightbox |
 | `showCover` | `false` | stand page 1 alone as a cover instead of pairing it |
 | `hardCovers` | `false` | make the covers rigid rather than bending |
 | `pageCorners` | `true` | lift the page corner under the pointer |
