@@ -42,7 +42,12 @@ export async function createPdfSource(opts: PdfSourceOptions): Promise<PageSourc
       canvas.height = Math.round(viewport.height);
       canvas.style.width = "100%";
       canvas.style.height = "100%";
-      await page.render({ canvas, viewport }).promise;
+      // Pass the context as well as the canvas. Given only `canvas`, pdf.js takes
+      // ownership of it (control goes offscreen) and the element can no longer be
+      // read back: toBlob simply never calls back.
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("flipview: 2d context unavailable");
+      await page.render({ canvas, canvasContext: ctx, viewport }).promise;
       page.cleanup();
     },
     destroy() {

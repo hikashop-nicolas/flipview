@@ -31,6 +31,8 @@ export interface FlipviewOptions {
   deepLink?: boolean | string;
   onReady?: (handle: FlipviewHandle) => void;
   onPageChange?: (index: number) => void;
+  /** Called when a page fails to paint. The viewer keeps going. */
+  onError?: (error: unknown, index: number) => void;
 }
 
 export interface FlipviewHandle {
@@ -155,16 +157,27 @@ export function createFlipview(
     try {
       const inner = shells[index].querySelector<HTMLElement>(".fv-page-inner")!;
       const canvas = document.createElement("canvas");
-      canvas.className = "fv-canvas";
+      canvas.className = "fv-page-canvas";
       await source.render(index, canvas, width);
       // A resize during the render would have made this canvas the wrong size.
       if (width !== renderWidth) return;
-      inner.querySelector(".fv-canvas")?.remove();
+
+      drop(index);
       inner.appendChild(canvas);
+
+      // The flip engine clones a page element to draw the underside of a fold, and
+      // cloneNode never carries a canvas bitmap, so the folding page came out blank.
+      // The same picture therefore also goes on as a background image, which does
+      // survive cloning. The canvas stays on top for the normal, sharper display,
+      // and if the readback fails the page still shows: only the fold falls back.
+      const url = toImageUrl(canvas);
+      if (url.length > 512) inner.style.backgroundImage = `url("${url}")`;
+
       shells[index].classList.add("fv-rendered");
       rendered.push(index);
       evict();
     } catch (err) {
+      options.onError?.(err, index);
       console.error("flipview: page", index, "failed", err);
     } finally {
       pending.delete(index);
@@ -172,7 +185,9 @@ export function createFlipview(
   }
 
   function drop(index: number): void {
-    shells[index].querySelector(".fv-canvas")?.remove();
+    shells[index].querySelector(".fv-page-canvas")?.remove();
+    const inner = shells[index].querySelector<HTMLElement>(".fv-page-inner");
+    if (inner) inner.style.backgroundImage = "";
     shells[index].classList.remove("fv-rendered");
   }
 
@@ -344,4 +359,13 @@ export function createFlipview(
 
   options.onReady?.(handle);
   return handle;
+}
+
+/**
+ * WebP where it is supported, PNG otherwise. Deliberately the synchronous encode:
+ * toBlob defers its callback to a task the compositor can starve, and a page that
+ * never finishes encoding never appears at all.
+ */
+function toImageUrl(canvas: HTMLCanvasElement): string {
+  return canvas.toDataURL("image/webp", 0.92);
 }
