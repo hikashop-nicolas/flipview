@@ -1,65 +1,129 @@
 /**
  * The page-turn sound, synthesised rather than shipped.
  *
- * A paper turn is a short burst of filtered noise with a fast attack and a soft
- * tail, which WebAudio can make in a few lines. That means no audio file to ship,
- * no licence to track, and nothing extra to download.
+ * Paper is not a whoosh. A turning sheet is a crackle: dozens of tiny transients
+ * a few milliseconds long as the fibres release, densest while the page is moving
+ * fastest, followed by a soft landing as it settles. A single smooth noise burst,
+ * however it is filtered, reads as wind instead.
+ *
+ * So the buffer is built from grains rather than from filtered noise, and it is
+ * rebuilt on every turn with fresh randomness: two real page turns never sound
+ * identical, and a sample that repeats exactly is the thing that gives a synthetic
+ * sound away.
+ *
+ * Synthesising it means no audio file to ship, no licence to track, and nothing
+ * extra to download.
  */
 export interface FlipSound {
   play(): void;
   destroy(): void;
 }
 
+const DURATION = 0.36;
+
 export function createFlipSound(volume = 0.35): FlipSound {
   let ctx: AudioContext | null = null;
-  let noise: AudioBuffer | null = null;
 
-  function ready(): boolean {
-    const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!Ctor) return false;
+  function context(): AudioContext | null {
+    const Ctor =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctor) return null;
     // Created on first use: a context made before a gesture starts suspended.
     if (!ctx) ctx = new Ctor();
-    if (!noise) {
-      const length = Math.floor(ctx.sampleRate * 0.35);
-      noise = ctx.createBuffer(1, length, ctx.sampleRate);
-      const data = noise.getChannelData(0);
-      for (let i = 0; i < length; i++) {
-        // Brown-ish noise: closer to paper than white noise, which sounds like static.
-        data[i] = (data[i - 1] ?? 0) * 0.72 + (Math.random() * 2 - 1) * 0.28;
-      }
-    }
-    return true;
+    return ctx;
+  }
+
+  function rustle(audio: AudioContext): AudioBuffer {
+    const rate = audio.sampleRate;
+    const buffer = audio.createBuffer(1, Math.floor(rate * DURATION), rate);
+    renderRustle(buffer.getChannelData(0), rate);
+    return buffer;
   }
 
   return {
     play() {
-      if (!ready() || !ctx || !noise) return;
-      void ctx.resume();
+      const audio = context();
+      if (!audio) return;
+      void audio.resume();
 
-      const source = ctx.createBufferSource();
-      source.buffer = noise;
-      source.playbackRate.value = 0.85 + Math.random() * 0.3;
+      const source = audio.createBufferSource();
+      source.buffer = rustle(audio);
 
-      // A sweeping band-pass is what gives the sense of a sheet passing by.
-      const band = ctx.createBiquadFilter();
-      band.type = "bandpass";
-      band.frequency.setValueAtTime(900, ctx.currentTime);
-      band.frequency.exponentialRampToValueAtTime(2600, ctx.currentTime + 0.18);
-      band.Q.value = 0.7;
+      // Paper has almost nothing low in it: without this it sounds like a curtain.
+      const highpass = audio.createBiquadFilter();
+      highpass.type = "highpass";
+      highpass.frequency.value = 700 + Math.random() * 200;
 
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(volume, ctx.currentTime + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
+      // A gentle sweep upward as the page passes, rather than a fixed colour.
+      const body = audio.createBiquadFilter();
+      body.type = "bandpass";
+      body.frequency.setValueAtTime(1800, audio.currentTime);
+      body.frequency.exponentialRampToValueAtTime(4200, audio.currentTime + DURATION * 0.7);
+      body.Q.value = 0.5;
 
-      source.connect(band).connect(gain).connect(ctx.destination);
+      const gain = audio.createGain();
+      gain.gain.setValueAtTime(volume, audio.currentTime);
+      gain.gain.setValueAtTime(volume, audio.currentTime + DURATION * 0.8);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + DURATION);
+
+      source.connect(highpass).connect(body).connect(gain).connect(audio.destination);
       source.start();
-      source.stop(ctx.currentTime + 0.32);
+      source.stop(audio.currentTime + DURATION + 0.02);
     },
     destroy() {
       void ctx?.close();
       ctx = null;
-      noise = null;
     },
   };
+}
+
+/** How fast the sheet is moving, 0 to 1, over the length of the turn. */
+function motion(t: number): number {
+  // Slow start, quick middle, trailing off: the shape of a hand turning a page.
+  return Math.sin(Math.PI * Math.min(1, Math.max(0, t))) ** 1.4;
+}
+
+/**
+ * Writes one page turn into `data`. Pure arithmetic, no audio API, so the shape of
+ * the sound can be tested: what separates paper from wind is that it is made of
+ * many discrete transients, and that is measurable.
+ */
+export function renderRustle(data: Float32Array, rate: number, random: () => number = Math.random): void {
+  const length = data.length;
+
+  // Grains, not noise: each two to eight milliseconds long, bunched where the page
+  // is moving fastest, which is what fibres releasing sound like.
+  const grains = Math.floor(120 + random() * 60);
+  for (let g = 0; g < grains; g++) {
+    const at = random() ** 0.8;
+    const speed = motion(at);
+    if (random() > 0.25 + speed * 0.75) continue;
+
+    const start = Math.floor(at * length);
+    const span = Math.floor(rate * (0.002 + random() * 0.006));
+    const amp = (0.25 + random() * 0.75) * speed;
+
+    for (let i = 0; i < span && start + i < length; i++) {
+      const k = i / span;
+      // Sharp attack, quick decay: a click with a tail, not a tone.
+      data[start + i] += (random() * 2 - 1) * amp * (1 - k) ** 2.2;
+    }
+  }
+
+  // The sheet landing: a short, duller thud under the last of the crackle.
+  const landing = Math.floor(length * 0.82);
+  let low = 0;
+  for (let i = landing; i < length; i++) {
+    const k = (i - landing) / (length - landing);
+    low = low * 0.86 + (random() * 2 - 1) * 0.14;
+    data[i] += low * 0.7 * (1 - k) ** 1.6;
+  }
+
+  // Keep the peak in range whatever the randomness produced.
+  let peak = 0;
+  for (let i = 0; i < length; i++) peak = Math.max(peak, Math.abs(data[i]));
+  if (peak > 0) {
+    for (let i = 0; i < length; i++) data[i] /= peak;
+  }
 }
