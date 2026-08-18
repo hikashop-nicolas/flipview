@@ -23,6 +23,8 @@ export interface FlipviewOptions {
   pageCorners?: boolean;
   /** Below this container width in px, 'auto' mode shows one page at a time. */
   breakpoint?: number;
+  /** Cap the book's height in px. Without it the book fills the viewport. */
+  maxHeight?: number;
   /** false hides the toolbar entirely; an object turns individual buttons off. */
   toolbar?: boolean | ToolbarButtons;
   /** Arrow keys, Home and End drive the book when it has focus. */
@@ -240,7 +242,9 @@ export function createFlipview(
     const available = stage.clientWidth || 800;
     const top = stage.getBoundingClientRect().top;
     const chrome = (root.querySelector(".fv-toolbar")?.clientHeight ?? 0) + 24;
-    const maxHeight = Math.max(320, window.innerHeight - Math.max(top, 0) - chrome);
+    const room = window.innerHeight - Math.max(top, 0) - chrome;
+    const capped = opt.maxHeight ? Math.min(room, opt.maxHeight) : room;
+    const maxHeight = Math.max(320, capped);
     let width = portrait ? available : Math.floor(available / 2);
     let height = Math.round(width / source.aspect);
     if (height > maxHeight) {
