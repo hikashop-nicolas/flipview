@@ -54,6 +54,7 @@ async function open(next?: () => Promise<PageSource>, startAt = 0) {
     onPageChange: (i) => (status.textContent = `page ${i + 1} / ${source.pageCount}`),
   });
   if (startAt > 0) book.goTo(startAt);
+  if (asked("panel", false)) book.togglePanel();
   status.textContent = `page ${(book.currentPage() ?? 0) + 1} / ${source.pageCount}`;
   // Test hook: the e2e suite and manual debugging drive the book through this.
   (window as unknown as { flipview: unknown }).flipview = book;
@@ -80,5 +81,7 @@ document.getElementById("file")!.addEventListener("change", (e) => {
   }
 });
 
-// Sample document so the demo shows something on load.
-void open(() => createPdfSource({ url: "./sample.pdf", workerSrc }));
+// Sample document so the demo shows something on load. ?doc=outline opens the
+// small one that has a table of contents, which is what fills the contents tab.
+const doc = wanted.get("doc") === "outline" ? "./outline.pdf" : "./sample.pdf";
+void open(() => createPdfSource({ url: doc, workerSrc }));

@@ -1,0 +1,89 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R /Outlines 12 0 R /PageMode /UseOutlines >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R 11 0 R] /Count 4 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 104 >>
+stream
+BT /F1 28 Tf 50 500 Td (Introduction) Tj ET
+BT /F1 12 Tf 50 460 Td (A page of the outline sample.) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 420 595] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 101 >>
+stream
+BT /F1 28 Tf 50 500 Td (Materials) Tj ET
+BT /F1 12 Tf 50 460 Td (A page of the outline sample.) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 420 595] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 108 >>
+stream
+BT /F1 28 Tf 50 500 Td (Care and washing) Tj ET
+BT /F1 12 Tf 50 460 Td (A page of the outline sample.) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 420 595] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
+endobj
+10 0 obj
+<< /Length 99 >>
+stream
+BT /F1 28 Tf 50 500 Td (Contact) Tj ET
+BT /F1 12 Tf 50 460 Td (A page of the outline sample.) Tj ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 420 595] /Resources << /Font << /F1 3 0 R >> >> /Contents 10 0 R >>
+endobj
+12 0 obj
+<< /Type /Outlines /First 13 0 R /Last 16 0 R /Count 4 >>
+endobj
+13 0 obj
+<< /Title (Introduction) /Parent 12 0 R /Next 14 0 R /Dest [5 0 R /Fit] >>
+endobj
+14 0 obj
+<< /Title (Materials) /Parent 12 0 R /Prev 13 0 R /Next 15 0 R /Dest [7 0 R /Fit] >>
+endobj
+15 0 obj
+<< /Title (Care and washing) /Parent 12 0 R /Prev 14 0 R /Next 16 0 R /Dest [9 0 R /Fit] >>
+endobj
+16 0 obj
+<< /Title (Contact) /Parent 12 0 R /Prev 15 0 R /Dest [11 0 R /Fit] >>
+endobj
+xref
+0 17
+0000000000 65535 f 
+0000000009 00000 n 
+0000000098 00000 n 
+0000000174 00000 n 
+0000000244 00000 n 
+0000000399 00000 n 
+0000000525 00000 n 
+0000000677 00000 n 
+0000000803 00000 n 
+0000000962 00000 n 
+0000001088 00000 n 
+0000001238 00000 n 
+0000001366 00000 n 
+0000001440 00000 n 
+0000001531 00000 n 
+0000001632 00000 n 
+0000001740 00000 n 
+trailer
+<< /Size 17 /Root 1 0 R >>
+startxref
+1827
+%%EOF

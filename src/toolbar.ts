@@ -14,12 +14,14 @@ export interface ToolbarTarget {
   share(): Promise<boolean>;
   search(query: string): Promise<string>;
   searchNext(): void;
+  togglePanel(): void;
   pageCount: number;
 }
 
 export interface ToolbarButtons {
   nav?: boolean;
   ends?: boolean;
+  panel?: boolean;
   pageInput?: boolean;
   search?: boolean;
   zoom?: boolean;
@@ -31,6 +33,7 @@ export interface ToolbarButtons {
 const ALL: Required<ToolbarButtons> = {
   nav: true,
   ends: true,
+  panel: false,
   pageInput: true,
   search: false,
   zoom: true,
@@ -51,6 +54,7 @@ const ICONS = {
   done: "M5 12.5l5 5L19 7",
   download: "M12 3v11m0 0 4-4m-4 4-4-4M5 19h14",
   search: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM16.5 16.5 21 21",
+  panel: "M4 6h16M4 12h16M4 18h16",
   share: "M9 13a3 3 0 1 1-3-3 3 3 0 0 1 3 3zm12-6a3 3 0 1 1-3-3 3 3 0 0 1 3 3zm0 12a3 3 0 1 1-3-3 3 3 0 0 1 3 3zM8.6 11.6l6.8-3.2m0 7.2-6.8-3.2",
 };
 
@@ -67,6 +71,11 @@ export function createToolbar(target: ToolbarTarget, buttons: ToolbarButtons = {
 
   const input = document.createElement("input");
   const label = document.createElement("span");
+
+  if (show.panel) {
+    el.appendChild(button("panel", t("panel"), () => target.togglePanel()));
+    el.appendChild(spacer());
+  }
 
   if (show.ends) el.appendChild(button("first", t("first"), () => target.first()));
   if (show.nav) el.appendChild(button("prev", t("prev"), () => target.prev()));

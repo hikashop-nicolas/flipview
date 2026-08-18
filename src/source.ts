@@ -16,7 +16,17 @@ export interface PageSource {
   text?(index: number, container: HTMLElement, cssWidth: number): Promise<void>;
   /** The page's words, in reading order, for searching. */
   words?(index: number): Promise<string>;
+  /** The document's own table of contents, where it has one. */
+  outline?(): Promise<OutlineEntry[]>;
   destroy(): void;
+}
+
+/** One line of a document's table of contents. */
+export interface OutlineEntry {
+  title: string;
+  /** 0-based page index, or null when the destination cannot be resolved. */
+  page: number | null;
+  children: OutlineEntry[];
 }
 
 export interface PdfSourceOptions {
@@ -77,6 +87,44 @@ export async function createPdfSource(opts: PdfSourceOptions): Promise<PageSourc
       });
 
       await layer.render();
+    },
+
+    async outline() {
+      const raw = await doc.getOutline().catch(() => null);
+
+      if (!raw) return [];
+
+      // A destination is a reference into the document, not a page number, so each
+      // one has to be resolved. An entry whose destination cannot be resolved is
+      // kept as a heading rather than dropped: the reader still sees the shape of
+      // the document.
+      const resolve = async (dest: unknown): Promise<number | null> => {
+        try {
+          const target = typeof dest === "string" ? await doc.getDestination(dest) : dest;
+          const ref = Array.isArray(target) ? target[0] : null;
+          if (ref === null || typeof ref !== "object") return null;
+
+          return await doc.getPageIndex(ref as never);
+        } catch {
+          return null;
+        }
+      };
+
+      const walk = async (items: typeof raw): Promise<OutlineEntry[]> => {
+        const out: OutlineEntry[] = [];
+
+        for (const item of items) {
+          out.push({
+            title: item.title,
+            page: await resolve(item.dest),
+            children: item.items?.length ? await walk(item.items) : [],
+          });
+        }
+
+        return out;
+      };
+
+      return walk(raw);
     },
 
     async words(index) {

@@ -7,6 +7,7 @@ import { t } from "./i18n";
 import { createToolbar, type ToolbarButtons } from "./toolbar";
 import { createZoom, type ZoomOptions } from "./zoom";
 import { createDeepLink } from "./deeplink";
+import { createPanel, type PanelHandle } from "./panel";
 import { createSearch, highlight, type SearchHit } from "./search";
 import { createFlipSound, type FlipSound } from "./sound";
 
@@ -38,6 +39,8 @@ export interface FlipviewOptions {
   textLayer?: boolean;
   /** Offer a search box. Needs a source that can give up its words. */
   search?: boolean;
+  /** Offer a side panel with the document's contents and its pages. */
+  panel?: boolean;
   /** false disables zooming; an object tunes the min, max and step. */
   zoom?: boolean | ZoomOptions;
   /** Track the page in the URL hash. true uses #page=N, a string names the parameter. */
@@ -64,6 +67,8 @@ export interface FlipviewHandle {
   prev(): void;
   first(): void;
   last(): void;
+  /** Opens or closes the contents and pages panel. */
+  togglePanel(): void;
   /** Searches the document and returns a short tally for a reader. */
   search(query: string): Promise<string>;
   /** Moves to the next page holding the current query, wrapping at the end. */
@@ -94,6 +99,7 @@ const DEFAULTS = {
   keyboard: true,
   textLayer: true,
   search: true,
+  panel: true,
   zoom: true,
   deepLink: false,
   rtl: false,
@@ -161,6 +167,12 @@ export function createFlipview(
   const start = fit(startPortrait);
   size(startPortrait, start);
 
+  // Someone who asked their system for less motion should not be handed a page
+  // that sweeps across the screen. The turn still happens, it just stops being an
+  // animation: the alternative, ignoring the setting, can make a reader ill.
+  const calm = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+  const flippingTime = () => (calm?.matches ? 1 : opt.flippingTime);
+
   const flip = new PageFlip(book, {
     width: start.width,
     height: start.height,
@@ -171,7 +183,7 @@ export function createFlipview(
     maxHeight: 2600,
     maxShadowOpacity: 0.5,
     drawShadow: true,
-    flippingTime: opt.flippingTime,
+    flippingTime: flippingTime(),
     showCover: opt.showCover,
     showPageCorners: opt.pageCorners,
     usePortrait: opt.mode !== "double",
@@ -372,6 +384,7 @@ export function createFlipview(
 
   function announce(index: number): void {
     bar?.update(index);
+    panel?.mark(index);
     link?.write(index);
     options.onPageChange?.(index);
   }
@@ -406,6 +419,12 @@ export function createFlipview(
 
   ensureWindow(0);
 
+  // The setting can change while a book is open.
+  const onCalmChange = (): void => {
+    flip.getSettings().flippingTime = flippingTime();
+  };
+  calm?.addEventListener?.("change", onCalmChange);
+
   let frame = 0;
   const observer = new ResizeObserver((entries) => {
     const width = entries[0]?.contentRect.width ?? 0;
@@ -426,6 +445,10 @@ export function createFlipview(
     prev: () => flip.flipPrev(),
     first: () => handle.goTo(0),
     last: () => handle.goTo(source.pageCount - 1),
+    togglePanel() {
+      panel?.toggle();
+      panel?.mark(flip.getCurrentPageIndex());
+    },
     async search(query) {
       hits = await finder.find(query);
       at = -1;
@@ -476,11 +499,13 @@ export function createFlipview(
     orientation: () => flip.getOrientation(),
     destroy() {
       observer.disconnect();
+      calm?.removeEventListener?.("change", onCalmChange);
       document.removeEventListener("fullscreenchange", onFullscreen);
       cancelAnimationFrame(frame);
       zoom?.destroy();
       link?.destroy();
       finder.destroy();
+      panel?.destroy();
       sound?.destroy();
       flip.destroy();
       source.destroy();
@@ -495,12 +520,37 @@ export function createFlipview(
       })
     : null;
 
+  // Built now, filled when the document gives up its contents: a panel that only
+  // exists once a promise has resolved cannot be opened before then.
+  const panel: PanelHandle | null = opt.panel
+    ? createPanel({
+        goTo: (index) => handle.goTo(index),
+        pageCount: source.pageCount,
+        async preview(index, width) {
+          const canvas = document.createElement("canvas");
+          await source.render(index, canvas, width);
+
+          return toImageUrl(canvas);
+        },
+      })
+    : null;
+
+  if (panel) {
+    stage.prepend(panel.el);
+    panel.mark(flip.getCurrentPageIndex());
+
+    void (source.outline ? source.outline() : Promise.resolve([]))
+      .catch(() => [])
+      .then((outline) => panel.setOutline(outline));
+  }
+
   const buttons = opt.toolbar === true || opt.toolbar === false ? {} : opt.toolbar;
   const bar = opt.toolbar
     ? createToolbar(handle, {
         zoom: !!opt.zoom,
         download: !!opt.downloadUrl,
         search: !!opt.search && typeof source.words === "function",
+        panel: !!opt.panel,
         share: !!opt.share && !!opt.deepLink,
         ...buttons,
       })

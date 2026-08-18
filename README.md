@@ -78,6 +78,7 @@ sources need nothing.
 | `keyboard` | `true` | arrow keys, Home and End when the stage has focus |
 | `textLayer` | `true` | lay the page's own text over each page, where the source has it |
 | `search` | `true` | offer a search box, where the source can give up its words |
+| `panel` | `true` | offer a side panel with the document's contents and its pages |
 
 ## Development
 

@@ -102,6 +102,29 @@
 					"wait": 1200
 				}
 			]
+		},
+		{
+			"id": "panel",
+			"comment": "Pages listed as thumbnails beside the book.",
+			"query": "panel=1",
+			"steps": [
+				{
+					"wait": 1500
+				}
+			]
+		},
+		{
+			"id": "contents",
+			"comment": "A document that has its own table of contents.",
+			"query": "panel=1&doc=outline",
+			"steps": [
+				{
+					"click": ".fv-panel-tab"
+				},
+				{
+					"wait": 1200
+				}
+			]
 		}
 	]
 }
