@@ -6,6 +6,7 @@ const EN = {
   next: "Next page",
   last: "Last page",
   pageOf: "Page {page} of {total}",
+  pageRole: "Page",
   goToPage: "Go to page",
   zoomIn: "Zoom in",
   zoomOut: "Zoom out",

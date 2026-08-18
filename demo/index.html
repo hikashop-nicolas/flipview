@@ -12,6 +12,7 @@
   header .btn:hover, header label.btn:hover { background: rgba(0,0,0,.34); }
   header label.opt { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; }
   #status { margin-left: auto; font-size: 13px; }
+  #diag { margin-left: auto; font-size: 13px; }
   #stage { padding: 20px 16px; }
   input[type=file] { display: none; }
 </style>
@@ -27,6 +28,7 @@
   <label class="opt"><input id="rtl" type="checkbox" /> Right to left</label>
   <label class="opt"><input id="sound" type="checkbox" /> Sound</label>
   <label class="opt"><input id="slow" type="checkbox" /> Slow flip</label>
+  <span id="diag"></span>
   <span id="status">loading...</span>
 </header>
 <div id="stage"></div>

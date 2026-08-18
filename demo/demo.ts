@@ -11,6 +11,15 @@ const asked = (name: string, fallback: boolean): boolean =>
   wanted.has(name) ? wanted.get(name) !== "0" : fallback;
 
 const stage = document.getElementById("stage")!;
+const diag = document.getElementById("diag")!;
+
+// The demo reports what the viewer built, so a state can be checked from a
+// screenshot in places where reading the DOM is not possible.
+window.setInterval(() => {
+  const layers = document.querySelectorAll(".fv-text-layer").length;
+  const words = document.querySelectorAll(".fv-text-layer span").length;
+  diag.textContent = `pages painted ${document.querySelectorAll(".fv-rendered").length}, text layers ${layers}, spans ${words}`;
+}, 700);
 const status = document.getElementById("status")!;
 const cover = document.getElementById("cover") as HTMLInputElement;
 cover.checked = asked("cover", true);

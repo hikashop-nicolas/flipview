@@ -45,8 +45,11 @@ several at random; give it none and pages turn silently.
 - **StPageFlip** (MIT) drives the fold geometry and the drag interaction. It is
   vendored in `src/engine` rather than depended on, because upstream stopped in
   January 2024. Our patches to it are ordinary commits: `git log src/engine`.
-- Pages are plain DOM elements, so anything can be laid over a page later: links,
-  hotspots, a text layer for selection and search.
+- **The page's own text** is laid over the picture of it, transparent, so a page
+  can be selected, found and read aloud. Without it a book is a stack of images
+  and a screen reader gets nothing at all.
+- Pages are plain DOM elements, so anything can be laid over a page later: links
+  and hotspots.
 
 `pdfjs-dist` is an **optional peer dependency**. Install it only if you load PDFs,
 and pass `workerSrc` so the host app keeps control of its own asset pipeline. Image
@@ -73,6 +76,7 @@ sources need nothing.
 | `toolbar` | `true` | `false` hides it, an object turns single buttons off |
 | `zoom` | `true` | `false` disables it, an object tunes min, max and step |
 | `keyboard` | `true` | arrow keys, Home and End when the stage has focus |
+| `textLayer` | `true` | lay the page's own text over each page, where the source has it |
 
 ## Development
 

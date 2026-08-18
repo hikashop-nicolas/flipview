@@ -3,6 +3,7 @@ import { PageFlip } from "./engine/PageFlip";
 // literal is used directly and only the type is pulled in.
 import type { SizeType } from "./engine/Settings";
 import type { PageSource } from "./source";
+import { t } from "./i18n";
 import { createToolbar, type ToolbarButtons } from "./toolbar";
 import { createZoom, type ZoomOptions } from "./zoom";
 import { createDeepLink } from "./deeplink";
@@ -32,6 +33,8 @@ export interface FlipviewOptions {
   toolbar?: boolean | ToolbarButtons;
   /** Arrow keys, Home and End drive the book when it has focus. */
   keyboard?: boolean;
+  /** Lay the page's own text over each page, where the source has it. */
+  textLayer?: boolean;
   /** false disables zooming; an object tunes the min, max and step. */
   zoom?: boolean | ZoomOptions;
   /** Track the page in the URL hash. true uses #page=N, a string names the parameter. */
@@ -82,6 +85,7 @@ const DEFAULTS = {
   pageCorners: true,
   toolbar: true,
   keyboard: true,
+  textLayer: true,
   zoom: true,
   deepLink: false,
   rtl: false,
@@ -122,6 +126,11 @@ export function createFlipview(
   for (let i = 0; i < source.pageCount; i++) {
     const page = document.createElement("div");
     page.className = "fv-page";
+    // A page is a region a reader can be told they are on, rather than an
+    // anonymous box holding a picture.
+    page.setAttribute("role", "group");
+    page.setAttribute("aria-roledescription", t("pageRole"));
+    page.setAttribute("aria-label", t("pageOf", { page: i + 1, total: source.pageCount }));
     // Rigid covers are opt-in. A hard page gets no temporary copy from the flip
     // engine, so the one element serves both faces through the rotation and
     // backface-visibility blanks it halfway: the first and last turn visibly jump.
@@ -200,6 +209,18 @@ export function createFlipview(
       // and if the readback fails the page still shows: only the fold falls back.
       const url = toImageUrl(canvas);
       if (url.length > 512) inner.style.backgroundImage = `url("${url}")`;
+
+      // The page's own text, over the picture of it. Without this a book is a
+      // stack of images: nothing to select, nothing to find, nothing to read
+      // aloud. It is transparent, so it changes nothing about how the page looks.
+      if (opt.textLayer && source.text) {
+        const layer = document.createElement("div");
+        layer.className = "fv-text-layer";
+        inner.appendChild(layer);
+        // The width the page is shown at, not the width it was rasterised at: the
+        // picture is stretched to fill the page and the text has to match it.
+        await source.text(index, layer, shells[index].clientWidth || width).catch(() => layer.remove());
+      }
 
       shells[index].classList.add("fv-rendered");
       rendered.push(index);
@@ -298,6 +319,17 @@ export function createFlipview(
     book.style.height = `${box.height}px`;
   }
 
+  /** Text follows the page: a resize changes what the picture is stretched to. */
+  function rescaleText(): void {
+    for (const layer of root.querySelectorAll<HTMLElement>(".fv-text-layer")) {
+      const base = Number(layer.dataset.baseWidth);
+      const shown = (layer.closest(".fv-page") as HTMLElement | null)?.clientWidth ?? 0;
+      if (base > 0 && shown > 0) {
+        layer.style.setProperty("--scale-factor", String(shown / base));
+      }
+    }
+  }
+
   function relayout(): void {
     if (!settled) {
       pendingLayout = true;
@@ -311,6 +343,7 @@ export function createFlipview(
     // onto the element as a min-width, so it has to be a real width.
     flip.getSettings().minWidth = next.width;
     flip.update();
+    rescaleText();
     zoom?.refresh();
     if (next.width > renderWidth * RERENDER_RATIO) {
       renderWidth = next.width;

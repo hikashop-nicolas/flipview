@@ -6,6 +6,16 @@ export interface PageSource {
   readonly aspect: number;
   /** Paint page `index` (0-based) into `canvas` at roughly `cssWidth` CSS pixels wide. */
   render(index: number, canvas: HTMLCanvasElement, cssWidth: number): Promise<void>;
+  /**
+   * Lay the page's text over `container`, sized to `cssWidth`.
+   *
+   * A source that has no text simply does not offer this, and a book made of
+   * images does not. Where it exists it is what makes a page selectable, findable
+   * and readable by a screen reader: a picture of a page is none of those.
+   */
+  text?(index: number, container: HTMLElement, cssWidth: number): Promise<void>;
+  /** The page's words, in reading order, for searching. */
+  words?(index: number): Promise<string>;
   destroy(): void;
 }
 
@@ -50,6 +60,36 @@ export async function createPdfSource(opts: PdfSourceOptions): Promise<PageSourc
       await page.render({ canvas, canvasContext: ctx, viewport }).promise;
       page.cleanup();
     },
+    async text(index, container, cssWidth) {
+      const page = await doc.getPage(index + 1);
+      const base = page.getViewport({ scale: 1 });
+
+      // The page's own width in points is recorded on the element so the scale can
+      // be recomputed later: the picture is stretched to whatever size the page is
+      // shown at, and the text has to be stretched by exactly the same amount.
+      container.dataset.baseWidth = String(base.width);
+      container.style.setProperty('--scale-factor', String(cssWidth / base.width));
+
+      const layer = new pdfjs.TextLayer({
+        textContentSource: page.streamTextContent(),
+        container,
+        viewport: page.getViewport({ scale: cssWidth / base.width }),
+      });
+
+      await layer.render();
+    },
+
+    async words(index) {
+      const page = await doc.getPage(index + 1);
+      const content = await page.getTextContent();
+
+      return content.items
+        .map((item) => ('str' in item ? item.str : ''))
+        .join('')
+        .replace(/\s+/g, ' ')
+        .trim();
+    },
+
     destroy() {
       void doc.destroy();
     },

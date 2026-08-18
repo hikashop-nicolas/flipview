@@ -63,6 +63,58 @@
   background-size: 100% 100%;
 }
 
+/* The page's own text, laid over the picture of it. Transparent, so it changes
+   nothing about how a page looks, and positioned by pdf.js.
+   
+   These rules are pdf.js's own, from its text layer stylesheet, renamed onto our
+   class. They are not decoration: pdf.js writes each span's position as a
+   percentage and its size into custom properties, and leaves the arithmetic to
+   the stylesheet. Hand-rolling something similar produces text at the default
+   font size in roughly the right place, which is what happened first. */
+.fv-text-layer {
+  --total-scale-factor: calc(var(--scale-factor, 1) * var(--device-pixel-ratio, 1));
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
+
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  text-align: initial;
+  opacity: 1;
+  line-height: 1;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  z-index: 2;
+}
+
+.fv-text-layer :is(span, br) {
+  position: absolute;
+  color: transparent;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+
+.fv-text-layer > :not(.markedContent),
+.fv-text-layer .markedContent span:not(.markedContent) {
+  z-index: 1;
+  --font-height: 0;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  --scale-x: 1;
+  --rotate: 0deg;
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+
+.fv-text-layer .markedContent {
+  display: contents;
+}
+
+.fv-text-layer ::selection {
+  background: rgba(25, 118, 210, 0.35);
+}
+
 .fv-page-canvas {
   display: block;
   width: 100%;
