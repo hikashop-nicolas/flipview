@@ -21,8 +21,39 @@ export interface FlipSound {
 
 const DURATION = 0.36;
 
-export function createFlipSound(volume = 0.35): FlipSound {
+/**
+ * @param volume 0 to 1.
+ * @param urls   Recordings to play instead of the synthesised turn. Several are
+ *               picked between at random, because one sample repeating on every
+ *               turn is worse than a synthetic one. The synthesis stays as the
+ *               fallback: if a file is missing or the browser will not decode it,
+ *               the book still sounds like a book.
+ */
+export function createFlipSound(volume = 0.35, urls: string[] = []): FlipSound {
   let ctx: AudioContext | null = null;
+  const encoded = new Map<string, Promise<ArrayBuffer>>();
+  const decoded = new Map<string, AudioBuffer>();
+
+  // Fetching starts now, decoding waits for a context, which waits for a gesture.
+  for (const url of urls) {
+    encoded.set(
+      url,
+      fetch(url).then((r) => {
+        if (!r.ok) throw new Error(`flipview: cannot load ${url}`);
+        return r.arrayBuffer();
+      }),
+    );
+  }
+
+  function decode(audio: AudioContext): void {
+    for (const [url, pending] of encoded) {
+      encoded.delete(url);
+      void pending
+        .then((bytes) => audio.decodeAudioData(bytes))
+        .then((buffer) => decoded.set(url, buffer))
+        .catch(() => undefined);
+    }
+  }
 
   function context(): AudioContext | null {
     const Ctor =
@@ -46,6 +77,20 @@ export function createFlipSound(volume = 0.35): FlipSound {
       const audio = context();
       if (!audio) return;
       void audio.resume();
+      decode(audio);
+
+      const recordings = [...decoded.values()];
+      if (recordings.length > 0) {
+        const source = audio.createBufferSource();
+        source.buffer = recordings[Math.floor(Math.random() * recordings.length)];
+        // A little variation, so a repeat does not sound like a repeat.
+        source.playbackRate.value = 0.94 + Math.random() * 0.12;
+        const level = audio.createGain();
+        level.gain.value = volume;
+        source.connect(level).connect(audio.destination);
+        source.start();
+        return;
+      }
 
       const source = audio.createBufferSource();
       source.buffer = rustle(audio);
@@ -74,6 +119,8 @@ export function createFlipSound(volume = 0.35): FlipSound {
     destroy() {
       void ctx?.close();
       ctx = null;
+      encoded.clear();
+      decoded.clear();
     },
   };
 }

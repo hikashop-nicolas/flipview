@@ -37,6 +37,8 @@ export interface FlipviewOptions {
   rtl?: boolean;
   /** Play a page-turn sound. A number sets the volume, 0 to 1. */
   sound?: boolean | number;
+  /** Recordings to use instead of the synthesised turn, picked between at random. */
+  soundUrl?: string | string[];
   /** Offer the original document for download, from this URL. */
   downloadUrl?: string;
   /** Offer a button that copies a link to the current page. Needs deepLink. */
@@ -306,7 +308,10 @@ export function createFlipview(
   }
 
   const sound: FlipSound | null = opt.sound
-    ? createFlipSound(typeof opt.sound === "number" ? opt.sound : undefined)
+    ? createFlipSound(
+        typeof opt.sound === "number" ? opt.sound : undefined,
+        opt.soundUrl === undefined ? [] : [opt.soundUrl].flat(),
+      )
     : null;
 
   flip.on("flip", (e) => {
