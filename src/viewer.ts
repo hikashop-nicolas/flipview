@@ -161,6 +161,8 @@ export function createFlipview(
   container.appendChild(root);
 
   let hotspots: Hotspot[] = options.hotspots ?? [];
+  // Assigned once the panel is built, and used by the layout before then.
+  let sidePanel: PanelHandle | null = null;
 
   // Page shells go in first and stay; only their canvases come and go.
   const shells: HTMLElement[] = [];
@@ -389,6 +391,15 @@ export function createFlipview(
   function size(portrait: boolean, box: { width: number; height: number }): void {
     book.style.width = `${portrait ? box.width : box.width * 2}px`;
     book.style.height = `${box.height}px`;
+    // The panel is told the same height. A percentage cap would resolve against a
+    // flex line whose own height is what the panel is trying to be bounded by, so
+    // it resolves to nothing and a long book's thumbnails push the toolbar down
+    // the page.
+    //
+    // Through a variable rather than the panel itself: the first size is computed
+    // while the panel is still being built, and naming a const before it exists
+    // is a throw, not an undefined.
+    sidePanel?.fit(box.height);
   }
 
   /** Text follows the page: a resize changes what the picture is stretched to. */
@@ -609,7 +620,9 @@ export function createFlipview(
     : null;
 
   if (panel) {
+    sidePanel = panel;
     stage.prepend(panel.el);
+    panel.fit(book.getBoundingClientRect().height);
     panel.mark(flip.getCurrentPageIndex());
 
     void (source.outline ? source.outline() : Promise.resolve([]))

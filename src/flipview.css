@@ -33,6 +33,7 @@
   display: flex;
   flex-direction: column;
   width: 176px;
+  /* The real cap is set in pixels by the viewer, from the book's own height. */
   max-height: 100%;
   border-radius: var(--fv-radius, 8px);
   background: var(--fv-panel-bg, #f3f5f8);
@@ -275,17 +276,23 @@
 .fv-btn svg {
   width: 20px;
   height: 20px;
-  fill: currentColor;
-}
-
-/* The zoom and fullscreen glyphs are strokes, not filled shapes. */
-.fv-btn-zoomIn svg,
-.fv-btn-zoomOut svg,
-.fv-btn-fullscreen svg {
+  /* Stroked by default. Most of the glyphs are lines rather than shapes, and a
+     filled line is an invisible one: the panel button spent a release with no
+     icon at all because it was the one nobody remembered to list here. */
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
   stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The page arrows are solid shapes, and are the exception. */
+.fv-btn-first svg,
+.fv-btn-prev svg,
+.fv-btn-next svg,
+.fv-btn-last svg {
+  fill: currentColor;
+  stroke: none;
 }
 
 .fv-toast {
@@ -317,12 +324,9 @@
   font: inherit;
 }
 
+/* The tick is drawn a little heavier than the rest. */
 .fv-btn-done svg {
-  fill: none;
-  stroke: currentColor;
   stroke-width: 2.4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .fv-btn-done {
@@ -330,14 +334,6 @@
 }
 
 .fv-btn-share svg,
-.fv-btn-download svg {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
 /* A hit, marked on the transparent text: the box is the whole point. */
 .fv-text-layer span.fv-hit {
   background: rgba(255, 214, 0, 0.45);

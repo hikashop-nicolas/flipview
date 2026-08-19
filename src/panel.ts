@@ -13,6 +13,8 @@ export interface PanelHandle {
   toggle(): void;
   /** Fills in the document's own contents, which arrive after the book is up. */
   setOutline(entries: OutlineEntry[]): void;
+  /** Caps the panel to the height of the book beside it, in pixels. */
+  fit(height: number): void;
   open(): boolean;
   /** Marks which page the reader is on. */
   mark(index: number): void;
@@ -135,6 +137,9 @@ export function createPanel(target: PanelTarget): PanelHandle {
   return {
     el,
     setOutline,
+    fit(height) {
+      el.style.maxHeight = height > 0 ? `${height}px` : "";
+    },
     toggle() {
       el.hidden = !el.hidden;
       if (!el.hidden) void paint();
