@@ -43,8 +43,15 @@ const slow = document.getElementById("slow") as HTMLInputElement;
 const hotspots = document.getElementById("hotspots") as HTMLInputElement;
 hotspots.checked = asked("hotspots", false);
 
-// Three regions on the sample, one of each kind: a link out, a jump to another
-// page, and one the host answers itself the way a shop would.
+// Regions over the real catalogue, on the page of engravings: what a hotspot is
+// for, over things that were actually for sale.
+const SCAN_SPOTS = [
+  { page: 4, x: 0.26, y: 0.11, width: 0.3, height: 0.32, label: "Marguerite Carnation, 6d a packet", data: { product: "66" } },
+  { page: 4, x: 0.655, y: 0.45, width: 0.235, height: 0.185, label: "Calendula pluvialis, 3d a packet", data: { product: "51" } },
+];
+
+// Three regions on the generated sample, one of each kind: a link out, a jump to
+// another page, and one the host answers itself the way a shop would.
 const SPOTS = [
   { page: 0, x: 0.08, y: 0.1, width: 0.4, height: 0.12, href: "https://example.com/", target: "_blank", label: "Publisher's site" },
   { page: 1, x: 0.55, y: 0.62, width: 0.34, height: 0.2, goToPage: 5, label: "Jump to page 6" },
@@ -71,7 +78,7 @@ async function open(next?: () => Promise<PageSource>, startAt = 0) {
     share: true,
     downloadUrl: "./sample.pdf",
     flippingTime: slow.checked ? 3000 : 700,
-    hotspots: hotspots.checked ? SPOTS : [],
+    hotspots: hotspots.checked ? (wanted.get("doc") === "scan" ? SCAN_SPOTS : SPOTS) : [],
     onHotspot: (spot) => {
       if (!spot.data?.product) return;
       status.textContent = `hotspot: product ${spot.data.product}`;
