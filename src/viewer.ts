@@ -494,7 +494,15 @@ export function createFlipview(
    * and with it the gap.
    */
   function size(portrait: boolean, box: { width: number; height: number }): void {
-    book.style.width = `${portrait ? box.width : box.width * 2}px`;
+    const spread = `${portrait ? box.width : box.width * 2}px`;
+
+    book.style.width = spread;
+    // And as a cap, which is what survives: the engine writes width: 100% onto
+    // this element whenever it is built, and then works its page size out from
+    // however wide the element turned out to be. A book capped shorter than the
+    // room it has is narrower than half the stage, and without this it is laid
+    // out as if it were not: pages half empty, with the text off to one side.
+    book.style.maxWidth = spread;
     book.style.height = `${box.height}px`;
     // The panel is told the same height. A percentage cap would resolve against a
     // flex line whose own height is what the panel is trying to be bounded by, so
@@ -588,6 +596,8 @@ export function createFlipview(
       stage.appendChild(book);
       buildShells(count);
       flip = createEngine(box);
+      // The engine has just written its own width onto the book element.
+      size(wantPortrait(), box);
       panel?.setPageCount(count);
       bar?.update(0);
 
