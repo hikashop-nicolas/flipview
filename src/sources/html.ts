@@ -59,6 +59,9 @@ export async function createHtmlSource(opts: HtmlSourceOptions | string[]): Prom
       frame.style.height = `${box.height}px`;
       frame.style.transform = `scale(${cssWidth / box.width})`;
       frame.style.transformOrigin = "0 0";
+      // The viewer rescales this when the book is resized, and needs to know what
+      // the scale is relative to.
+      frame.dataset.fvWidth = String(box.width);
 
       wrap.appendChild(frame);
       host.appendChild(wrap);

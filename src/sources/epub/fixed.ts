@@ -81,6 +81,7 @@ export async function createEpubSource(opts: EpubSourceOptions): Promise<PageSou
       // as a whole, which is what "fixed layout" means.
       frame.style.transform = `scale(${cssWidth / made.width})`;
       frame.style.transformOrigin = "0 0";
+      frame.dataset.fvWidth = String(made.width);
       frame.srcdoc = made.html;
 
       box.appendChild(frame);

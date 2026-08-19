@@ -333,7 +333,10 @@ export function createFlipview(
       // picture to put on the back of the fold.
       if (source.mount) {
         drop(index);
-        await source.mount(index, inner, width);
+        // The width the page is *shown* at, not the width the book last decided to
+        // render at: a mounted page is scaled to fit, so a number that is a little
+        // too big pushes its own margin off the edge.
+        await source.mount(index, inner, shells[index].clientWidth || width);
 
         if (width !== renderWidth) return;
 
@@ -482,6 +485,20 @@ export function createFlipview(
     sidePanel?.fit(box.height);
   }
 
+  /**
+   * A page that is a document is drawn at the size it was written for and scaled
+   * to fit, so a resize means a new scale. A picture stretches on its own; this
+   * does not.
+   */
+  function rescaleMounts(): void {
+    for (const frame of root.querySelectorAll<HTMLElement>(".fv-page-frame[data-fv-width]")) {
+      const drawn = Number(frame.dataset.fvWidth);
+      const shown = (frame.closest(".fv-page") as HTMLElement | null)?.clientWidth ?? 0;
+
+      if (drawn > 0 && shown > 0) frame.style.transform = `scale(${shown / drawn})`;
+    }
+  }
+
   /** Text follows the page: a resize changes what the picture is stretched to. */
   function rescaleText(): void {
     for (const layer of root.querySelectorAll<HTMLElement>(".fv-text-layer")) {
@@ -571,6 +588,7 @@ export function createFlipview(
     flip.getSettings().minWidth = next.width;
     flip.update();
     rescaleText();
+    rescaleMounts();
     zoom?.refresh();
     if (next.width > renderWidth * RERENDER_RATIO) {
       renderWidth = next.width;
