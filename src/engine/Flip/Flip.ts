@@ -159,6 +159,19 @@ export class Flip {
                 }
             }
 
+            // Ours: when the turn lands on a cover or on a last page standing
+            // alone, the other half of the book is about to be empty, and the
+            // page sitting there is the underside of the sheet now turning.
+            // Drawn flat it stays put through the whole fold and then blinks
+            // out. The rigid path rotates it away; a soft one has to drop it.
+            if (this.app.getPageCollection().landsAlone(direction)) {
+                if (direction === FlipDirection.BACK) {
+                    this.render.setLeftPage(null);
+                } else {
+                    this.render.setRightPage(null);
+                }
+            }
+
             this.render.setDirection(direction);
             this.calc = new FlipCalculation(
                 direction,

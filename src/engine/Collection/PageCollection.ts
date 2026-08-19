@@ -274,6 +274,26 @@ export abstract class PageCollection {
     }
 
     /**
+     * Ours: whether turning this way lands on a spread holding one page, which
+     * means one half of the book is about to be empty.
+     *
+     * That happens at a cover and at a last page standing alone. Upstream made
+     * both rigid, and the rigid path rotates the page beside them out of the way;
+     * a soft one leaves it lying there through the whole fold and then blinks it
+     * out, which is what this exists to let the render avoid.
+     */
+    public landsAlone(direction: FlipDirection): boolean {
+        if (this.render.getOrientation() !== Orientation.LANDSCAPE) return false;
+
+        const target =
+            direction === FlipDirection.FORWARD
+                ? this.getSpread()[this.currentSpreadIndex + 1]
+                : this.getSpread()[this.currentSpreadIndex - 1];
+
+        return target !== undefined && target.length === 1;
+    }
+
+    /**
      * Show current spread
      */
     private showSpread(): void {
