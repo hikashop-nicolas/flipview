@@ -145,14 +145,18 @@ export class FlipCalculation {
     public getRestingClipArea(): (Point | null)[] {
         const result: (Point | null)[] = [];
 
+        // Around the page the far way, from one end of the fold to the other. An
+        // edge the fold does not reach is followed to its corner: early in a turn
+        // the fold runs from the top edge to the side, and everything below it is
+        // still lying flat.
         result.push({ x: 0, y: 0 });
-        result.push(this.topIntersectPoint);
+        result.push(this.topIntersectPoint ?? { x: this.pageWidth, y: 0 });
 
         if (this.sideIntersectPoint !== null) {
             result.push(this.sideIntersectPoint);
         }
 
-        result.push(this.bottomIntersectPoint);
+        result.push(this.bottomIntersectPoint ?? { x: this.pageWidth, y: this.pageHeight });
         result.push({ x: 0, y: this.pageHeight });
 
         return result;
