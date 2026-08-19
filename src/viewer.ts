@@ -340,6 +340,10 @@ export function createFlipview(
 
         if (width !== renderWidth) return;
 
+        // The page may have been sized again while this was being built, and a
+        // page drawn at one size and scaled for another loses its own margin.
+        rescaleMounts();
+
         shells[index].classList.add("fv-rendered", "fv-page-mounted");
         rendered.push(index);
         evict();
