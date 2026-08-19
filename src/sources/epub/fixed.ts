@@ -4,8 +4,8 @@
 import type { OutlineEntry, PageSource } from "../../source";
 import { openArchive, type Archive } from "../archive";
 import { prepare, textOf, type PreparedPage } from "./document";
-import { pageContents, parse, type EpubPackage } from "./package";
-import { createFrames, type Pagination } from "./reflow";
+import { pageContents, parse, resolvePath, type EpubPackage } from "./package";
+import { createFlowSource } from "../flow/book";
 
 export interface EpubSourceOptions {
   url?: string;
@@ -147,109 +147,47 @@ export async function createEpubSource(opts: EpubSourceOptions): Promise<PageSou
  * position until the viewer has said what size the page is, and all three change
  * when it says something different.
  */
+/**
+ * The reflowing kind: the spine becomes sections of HTML with their references
+ * rewritten, and the flow machinery makes pages of them.
+ */
 function reflowable(archive: Archive, book: EpubPackage): PageSource {
-  const paths = book.spine.map((item) => item.path);
-
-  // The frames are laid out off-screen and moved into the page when shown. They
-  // are kept: laying a chapter out again on every turn is the difference between
-  // a book that turns and a book that stutters.
-  const hidden = document.createElement("div");
-  hidden.className = "fv-flow-hidden";
-  hidden.setAttribute("aria-hidden", "true");
-  document.body.appendChild(hidden);
-
-  const frames = createFrames(archive, paths, hidden);
-  let pagination: Pagination = { sections: [], total: 0 };
-
-  /** Where a page is, as its section and how far through it. */
-  const locate = (index: number): string | null => {
-    const section = [...pagination.sections].reverse().find((s) => index >= s.start);
-
-    if (!section) return null;
-
-    const through = section.pages > 1 ? (index - section.start) / section.pages : 0;
-
-    return `${paths.indexOf(section.path)}:${through.toFixed(4)}`;
-  };
-
-  return {
+  return createFlowSource({
     kind: "epub",
-    // Nothing until the first layout: a book that reflows has no pages of its own.
-    get pageCount() {
-      return pagination.total || 1;
-    },
-    /**
-     * A paperback's shape, and it does not change.
-     *
-     * The page size cannot be taken from the box the viewer offers: the viewer
-     * works the box out from the aspect, so a source that answers with the box's
-     * own shape asks for a different page every time it is asked, and the book
-     * repaginates for ever.
-     */
-    aspect: 1 / 1.4,
+    sections: book.spine.map((item) => ({
+      id: item.path,
+      html: () => wrap(archive, item.path),
+    })),
+    contents: (startOf) => pageContents(book.contents, startOf),
+    close: () => archive.destroy(),
+  });
+}
 
-    async layout(box) {
-      pagination = await frames.measure(box);
+/** One section, with its references rewritten, ready to be laid out. */
+function wrap(archive: Archive, path: string): string {
+  const doc = new DOMParser().parseFromString(archive.text(path), "application/xhtml+xml");
 
-      return pagination.total;
-    },
+  for (const node of doc.querySelectorAll("[src], [href], [xlink\\:href]")) {
+    for (const attribute of ["src", "href", "xlink:href"]) {
+      const href = node.getAttribute(attribute);
+      if (!href || /^(data:|https?:|blob:|#|mailto:)/i.test(href)) continue;
+      if (attribute === "href" && node.tagName.toLowerCase() === "a") continue;
 
-    async mount(index, host) {
-      frames.show(index, host, pagination);
-    },
+      const target = resolvePath(path, href);
 
-    /**
-     * A section's words, reported against the page that section starts on.
-     *
-     * The alternative is every page of a chapter matching every word in it, which
-     * turns a search for one line into a search result for forty pages. Sending a
-     * reader to where the chapter begins is a smaller lie and a more useful one.
-     */
-    async words(index) {
-      const section = pagination.sections.find((s) => s.start === index);
-
-      return section ? frames.words(section.path) : "";
-    },
-
-    async outline(): Promise<OutlineEntry[]> {
-      const startOf = new Map(pagination.sections.map((s) => [s.path, s.start]));
-
-      return pageContents(book.contents, (path) => startOf.get(path) ?? null);
-    },
-
-    locate,
-
-    /**
-     * The page a place is on now. The pagination it was written against is gone,
-     * so the section is found again and the fraction is applied to however many
-     * pages that section makes today.
-     */
-    async find(locator) {
-      const [item, through] = locator.split(":");
-      const at = Number(item);
-
-      if (!Number.isFinite(at) || at < 0 || at >= paths.length) {
-        // A plain number is a page from a document that did not reflow.
-        const page = Number(locator);
-
-        return Number.isFinite(page) && page >= 1 ? page - 1 : null;
+      if (attribute === "href" && node.tagName.toLowerCase() === "link" && archive.has(target)) {
+        const style = doc.createElement("style");
+        style.textContent = archive.text(target);
+        node.replaceWith(style);
+        continue;
       }
 
-      const section = pagination.sections.find((s) => s.path === paths[at]);
+      const url = archive.url(target);
+      if (url) node.setAttribute(attribute, url);
+    }
+  }
 
-      if (!section) return null;
-
-      const fraction = Math.min(0.999, Math.max(0, Number(through) || 0));
-
-      return section.start + Math.floor(fraction * section.pages);
-    },
-
-    destroy() {
-      frames.destroy();
-      hidden.remove();
-      archive.destroy();
-    },
-  };
+  return new XMLSerializer().serializeToString(doc);
 }
 
 async function fetchBook(url: string): Promise<ArrayBuffer> {

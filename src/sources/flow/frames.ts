@@ -1,15 +1,23 @@
-// Reflowable EPUB: a book with no pages until it is told how big a page is.
+// A book with no pages until it is told how big a page is.
 //
-// Each spine item is laid out in a hidden iframe as CSS columns the width of a
-// page, which turns its content into as many pages as it needs. A page is then a
-// column offset, and the whole book is the sum of them. This is how every EPUB
-// reader in a browser does it, because the browser is the only thing that knows
-// how the text will break.
-import type { Archive } from "../archive";
-import { resolvePath } from "./package";
+// Each section is laid out in a hidden iframe as CSS columns the width of a page,
+// which turns its content into as many pages as it needs. A page is then a column
+// offset, and the whole book is the sum of them. This is how every reader in a
+// browser does it, because the browser is the only thing that knows how the text
+// will break.
+//
+// Nothing here knows what the book was: a section is a piece of HTML with a name,
+// which an EPUB, an FB2 and a Kindle file can all be turned into.
+
+/** One piece of a book: HTML ready to be laid out, and something to call it. */
+export interface FlowSection {
+  id: string;
+  /** Made when it is first needed: a whole book of HTML strings is a lot of it. */
+  html: () => string;
+}
 
 export interface Section {
-  path: string;
+  id: string;
   /** How many pages this section makes at the current page size. */
   pages: number;
   /** The page index the section starts at. */
@@ -35,12 +43,13 @@ export interface Frames {
   /** Puts the page at `index` into `host`, as its section scrolled to that column. */
   show(index: number, host: HTMLElement, pagination: Pagination): Promise<void>;
   /** The words of one section, for searching. */
-  words(path: string): string;
+  words(id: string): string;
   destroy(): void;
 }
 
-export function createFrames(archive: Archive, paths: string[], hidden: HTMLElement): Frames {
+export function createFrames(sections: FlowSection[], hidden: HTMLElement): Frames {
   const frames = new Map<string, { frame: HTMLIFrameElement; ready: Promise<Document> }>();
+  const html = new Map(sections.map((section) => [section.id, section.html]));
   let box = { width: 600, height: 800 };
 
   /**
@@ -51,20 +60,20 @@ export function createFrames(archive: Archive, paths: string[], hidden: HTMLElem
    * it is written into the document the real one is about to replace, which is a
    * stylesheet that appears to do nothing at all.
    */
-  function load(frame: HTMLIFrameElement, path: string): Promise<Document> {
+  function load(frame: HTMLIFrameElement, id: string): Promise<Document> {
     const ready = new Promise<Document>((resolve) => {
       frame.addEventListener("load", () => resolve(frame.contentDocument as Document), {
         once: true,
       });
     });
 
-    frame.srcdoc = wrap(archive, path);
+    frame.srcdoc = html.get(id)?.() ?? "";
 
     return ready;
   }
 
-  function frameFor(path: string): { frame: HTMLIFrameElement; ready: Promise<Document> } {
-    const known = frames.get(path);
+  function frameFor(id: string): { frame: HTMLIFrameElement; ready: Promise<Document> } {
+    const known = frames.get(id);
     if (known) return known;
 
     const frame = document.createElement("iframe");
@@ -75,8 +84,8 @@ export function createFrames(archive: Archive, paths: string[], hidden: HTMLElem
     frame.style.height = `${box.height}px`;
     hidden.appendChild(frame);
 
-    const made = { frame, ready: load(frame, path) };
-    frames.set(path, made);
+    const made = { frame, ready: load(frame, id) };
+    frames.set(id, made);
 
     return made;
   }
@@ -135,11 +144,11 @@ export function createFrames(archive: Archive, paths: string[], hidden: HTMLElem
   return {
     async measure(next) {
       box = next;
-      const sections: Section[] = [];
+      const laid: Section[] = [];
       let start = 0;
 
-      for (const path of paths) {
-        const { frame, ready } = frameFor(path);
+      for (const { id } of sections) {
+        const { frame, ready } = frameFor(id);
         frame.style.width = `${box.width}px`;
         frame.style.height = `${box.height}px`;
 
@@ -149,11 +158,11 @@ export function createFrames(archive: Archive, paths: string[], hidden: HTMLElem
         style(doc);
 
         const pages = columns(doc);
-        sections.push({ path, pages, start });
+        laid.push({ id, pages, start });
         start += pages;
       }
 
-      return { sections, total: start };
+      return { sections: laid, total: start };
     },
 
     async show(index, host, pagination) {
@@ -173,14 +182,14 @@ export function createFrames(archive: Archive, paths: string[], hidden: HTMLElem
       frame.style.height = `${box.height}px`;
       host.appendChild(frame);
 
-      const doc = await load(frame, section.path);
+      const doc = await load(frame, section.id);
 
       // The columns are slid past the frame until the one this page is showing.
       style(doc, (index - section.start) * box.width);
     },
 
-    words(path) {
-      const doc = frames.get(path)?.frame.contentDocument;
+    words(id) {
+      const doc = frames.get(id)?.frame.contentDocument;
 
       return (doc?.body?.textContent ?? "").replace(/\s+/g, " ").trim();
     },
@@ -190,31 +199,4 @@ export function createFrames(archive: Archive, paths: string[], hidden: HTMLElem
       frames.clear();
     },
   };
-}
-
-/** One section, with its references rewritten, ready to be laid out. */
-function wrap(archive: Archive, path: string): string {
-  const doc = new DOMParser().parseFromString(archive.text(path), "application/xhtml+xml");
-
-  for (const node of doc.querySelectorAll("[src], [href], [xlink\\:href]")) {
-    for (const attribute of ["src", "href", "xlink:href"]) {
-      const href = node.getAttribute(attribute);
-      if (!href || /^(data:|https?:|blob:|#|mailto:)/i.test(href)) continue;
-      if (attribute === "href" && node.tagName.toLowerCase() === "a") continue;
-
-      const target = resolvePath(path, href);
-
-      if (attribute === "href" && node.tagName.toLowerCase() === "link" && archive.has(target)) {
-        const style = doc.createElement("style");
-        style.textContent = archive.text(target);
-        node.replaceWith(style);
-        continue;
-      }
-
-      const url = archive.url(target);
-      if (url) node.setAttribute(attribute, url);
-    }
-  }
-
-  return new XMLSerializer().serializeToString(doc);
 }
