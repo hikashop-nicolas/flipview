@@ -22,6 +22,25 @@
   outline: none;
 }
 
+/* Where the sections of a book that reflows are laid out: off-screen, but really
+   laid out, because a browser does not paginate what it is not showing. */
+.fv-flow-hidden {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.fv-flow-frame {
+  display: block;
+  border: 0;
+  background: transparent;
+}
+
 /* A page that is a document rather than a picture: an EPUB page is XHTML, and it
    is shown as itself. */
 .fv-page-mount {

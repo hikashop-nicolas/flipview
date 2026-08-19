@@ -95,7 +95,6 @@ export function createToolbar(target: ToolbarTarget, buttons: ToolbarButtons = {
       if (Number.isFinite(wanted)) target.goTo(clamp(wanted - 1, 0, target.pageCount - 1));
     });
     label.className = "fv-page-total";
-    label.textContent = `/ ${target.pageCount}`;
     group.append(input, label);
     el.appendChild(group);
   }
@@ -178,6 +177,10 @@ export function createToolbar(target: ToolbarTarget, buttons: ToolbarButtons = {
     update(index) {
       if (show.pageInput && document.activeElement !== input) {
         input.value = String(index + 1);
+        // Read every time, not once: a book that reflows has a different number
+        // of pages on every screen, and the total is the first thing to look
+        // wrong when it changes.
+        label.textContent = `/ ${target.pageCount}`;
       }
     },
   };

@@ -15,9 +15,9 @@ src/viewer.ts     the book: shells, layout, the flip engine. Format-blind.
 appears outside `src/sources`. The drift is gradual and every single import looks
 reasonable on its own, so it is checked rather than trusted.
 
-Today: **PDF** (pdf.js) and **images** (a folder of pictures). What follows is the
-path to EPUB, written before the work so the contract grows in one direction rather
-than being bent to fit each format as it arrives.
+Today: **PDF** (pdf.js), **images** (a folder of pictures), and **EPUB**, both
+fixed-layout and reflowable. What follows was written before the EPUB work and is
+kept as the record of it: each step says what it added and what it cost.
 
 ## What a format needs from the contract
 
@@ -31,7 +31,7 @@ than being bent to fit each format as it arrives.
 The last row is the one that matters. Everything else is work; that one is a change
 of meaning, and it is why the steps below are in this order.
 
-## Step 1: pages that are documents, not pictures
+## Step 1: pages that are documents, not pictures — done
 
 A fixed-layout EPUB page is an XHTML document with a declared viewport. It has to be
 rendered by the browser, in an iframe, with its resources rewritten to blob URLs out
@@ -57,7 +57,7 @@ the common fixed-layout case, where the page is one image with text over it, the
 source can hand that image over and the fold looks right; for the rest it does not,
 and a fold that shows the page's background colour for 700 ms is a fair price.
 
-## Step 2: where the reader is, in the document's own terms
+## Step 2: where the reader is, in the document's own terms — done
 
 Before any reflow work, the viewer stops assuming that a page number is a place:
 
@@ -79,7 +79,7 @@ there and impossible to retrofit quietly later: every feature that remembers a p
 (the deep link, the panel, search results, the extension's stored hotspots) has to
 go through it.
 
-## Step 3: a page count that changes
+## Step 3: a page count that changes — done
 
 Reflowable EPUB has no pages until it is given a page size. Two additions:
 
@@ -102,7 +102,7 @@ Pagination itself is the source's business: a hidden iframe per spine item, CSS
 multi-column at the page width, count = scrollWidth / pageWidth, and a page is a
 column offset. This is how every EPUB reader in a browser does it.
 
-## Step 4: what stops making sense
+## Step 4: what stops making sense — done
 
 - **Hotspots** are regions of a page in page-relative coordinates. On reflowed text
   a page is not a stable surface, so hotspots belong to fixed-page documents. The
@@ -113,16 +113,32 @@ column offset. This is how every EPUB reader in a browser does it.
 - **A printed page number** in the toolbar becomes "page 7 of 213 as laid out for
   this screen", which is what every e-reader shows and what readers already expect.
 
-## Which library
+## What EPUB actually cost
 
-[foliate-js](https://github.com/johnfactotum/foliate-js) is MIT, has no hard
-dependencies, reads EPUB, MOBI, AZW3, FB2 and CBZ, and hands over the spine, the
-table of contents and CFIs without rendering anything. It would come in as an
-optional peer dependency, exactly as `pdfjs-dist` does now: a site that never opens
-an EPUB should not download an EPUB reader.
+`src/sources/epub/` is about six hundred lines: the container and package
+paperwork, the archive, the rewriting of every relative reference to a blob URL,
+the fixed-layout source and the reflowable one. The only dependency is **fflate**
+for the zip, an optional peer exactly as `pdfjs-dist` is: a site that never opens an
+EPUB should not download a zip reader.
 
-Its own paginator solves step 3 and could be used or read; either way it stays
-inside `src/sources/epub/`, where the layering check can see it.
+[foliate-js](https://github.com/johnfactotum/foliate-js) was the alternative and is
+a good library; writing it ourselves kept the dependency list at one small thing and
+the code where the layering check can see it. If CFIs or MOBI ever matter, that is
+the moment to reach for it.
+
+Three things this cost that are worth knowing before doing it again:
+
+- **A frame that has just been made already has a document**, a blank one, and it is
+  complete. Anything written into it goes into the document the real content is
+  about to replace, so the stylesheet that makes the columns appeared to do nothing
+  and every chapter measured as one page. The listener goes on before the content.
+- **Two pages of one chapter cannot share an iframe.** Measuring uses one frame per
+  section; showing uses one per page, and the viewer's own window keeps the number
+  small.
+- **Laying out changes the book, which asks for a layout.** A book that takes its
+  page shape from the box it is offered will repaginate for ever, a few pages
+  different every time. The page shape is the source's to state, and a re-layout for
+  a page size within a pixel or two of the last one is not a re-layout.
 
 ## Adding some other format
 

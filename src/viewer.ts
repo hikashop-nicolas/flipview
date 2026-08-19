@@ -160,7 +160,17 @@ export function createFlipview(
   root.appendChild(stage);
   container.appendChild(root);
 
-  let hotspots: Hotspot[] = options.hotspots ?? [];
+  /**
+   * Regions of a page, where a page is a stable surface. A document that reflows
+   * has none: the words that are on page 12 today are on page 15 on a narrower
+   * screen, so a region drawn over them is a region over something else. Saying so
+   * beats putting a link somewhere arbitrary.
+   */
+  let hotspots: Hotspot[] = source.layout ? [] : (options.hotspots ?? []);
+
+  if (source.layout && (options.hotspots?.length ?? 0) > 0) {
+    console.warn("flipview: hotspots are not shown on a document that reflows, since its pages move");
+  }
   /**
    * How many pages there are *now*. A PDF says this once; a book that reflows says
    * something different for every size of page, so nothing may hold on to the
@@ -485,6 +495,8 @@ export function createFlipview(
 
   /** True while the book is being rebuilt, so a resize cannot start a second one. */
   let paginating = false;
+  /** The page size the document was last laid out for. */
+  let laidOutFor: { width: number; height: number } | null = null;
 
   /**
    * Asks a document that reflows how many pages it makes at this size, and
@@ -496,7 +508,20 @@ export function createFlipview(
    */
   async function repaginate(box: { width: number; height: number }): Promise<void> {
     if (!source.layout || paginating) return;
+
+    // Laying out changes the book, which trips the resize watcher, which asks for
+    // a layout: without this the book paginates itself for ever, a few pages
+    // different every time. A page size within a pixel or two is the same page.
+    if (
+      laidOutFor &&
+      Math.abs(laidOutFor.width - box.width) < 2 &&
+      Math.abs(laidOutFor.height - box.height) < 2
+    ) {
+      return;
+    }
+
     paginating = true;
+    laidOutFor = box;
 
     const was = locatorFor(flip.getCurrentPageIndex());
 
@@ -701,7 +726,7 @@ export function createFlipview(
     currentPage: () => flip.getCurrentPageIndex(),
     orientation: () => flip.getOrientation(),
     setHotspots(next) {
-      hotspots = next;
+      hotspots = source.layout ? [] : next;
       for (let i = 0; i < shells.length; i++) {
         placeHotspots(shells[i].querySelector<HTMLElement>(".fv-page-inner")!, i);
       }

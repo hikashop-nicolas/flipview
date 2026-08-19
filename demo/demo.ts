@@ -117,8 +117,9 @@ document.getElementById("file")!.addEventListener("change", (e) => {
 
 // Sample document so the demo shows something on load. ?doc=outline opens the
 // small one that has a table of contents, which is what fills the contents tab.
-if (wanted.get("doc") === "epub") {
-  void open(() => createEpubSource({ url: "./fixed.epub" }));
+if (wanted.get("doc") === "epub" || wanted.get("doc") === "reflow") {
+  const file = wanted.get("doc") === "reflow" ? "./reflow.epub" : "./fixed.epub";
+  void open(() => createEpubSource({ url: file }));
 } else {
   const doc =
     wanted.get("doc") === "outline"
