@@ -2,9 +2,11 @@
 
 ## StPageFlip
 
-- Source: https://github.com/Nodlik/StPageFlip, master `ab30ecc`
+- What we ship: [`src/engine/`](https://github.com/hikashop-nicolas/flipview/tree/main/src/engine)
+  in this repository, our own fork. Nothing is fetched from upstream at any point.
+- Taken from: https://github.com/Nodlik/StPageFlip, master `ab30ecc`, which is where
+  the code came from and not what runs.
 - Licence: MIT, see `src/engine/LICENSE`
-- Location: `src/engine/`
 
 The page-fold geometry and the drag interaction come from StPageFlip. It is vendored
 rather than depended on: upstream has been unmaintained since January 2024, with 42
@@ -12,7 +14,7 @@ open issues, 4 open pull requests and an issue asking for the project to be mark
 abandoned. The npm package was last published in 2021 and ships no type declarations.
 
 Our changes to it are ordinary commits in this repository, so `git log src/engine/`
-is the full list.
+is the full list, and the table at the end of this file summarises them.
 
 ## pdf.js
 
