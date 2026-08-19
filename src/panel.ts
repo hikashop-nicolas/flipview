@@ -154,6 +154,7 @@ export function createPanel(target: PanelTarget): PanelHandle {
     }
 
     // Anything that shifted while the pictures arrived is put right here.
+    place();
     reveal(thumbs[here[0]]);
   }
 
@@ -164,6 +165,35 @@ export function createPanel(target: PanelTarget): PanelHandle {
    */
   /** The pages last marked, so painting can put the scroll right afterwards. */
   let here: number[] = [];
+
+  // One box that moves, rather than a border that appears and disappears: a
+  // reader turning pages can see where the mark went, which is the difference
+  // between following the book and looking for your place in it.
+  const marker = document.createElement("div");
+  marker.className = "fv-thumb-marker";
+  marker.hidden = true;
+  lists.pages.appendChild(marker);
+
+  /** Puts the marker over the pages on show. */
+  function place(): void {
+    const first = thumbs[here[0]];
+    const last = thumbs[here[here.length - 1]] ?? first;
+
+    if (!first) {
+      marker.hidden = true;
+      return;
+    }
+
+    marker.hidden = false;
+    marker.style.transform = `translateY(${first.offsetTop}px)`;
+    marker.style.height = `${last.offsetTop + last.offsetHeight - first.offsetTop}px`;
+
+    // The first placement is where the mark is, not a slide from the top of the
+    // list, so the transition is only turned on afterwards.
+    if (!marker.classList.contains("fv-thumb-marker-live")) {
+      requestAnimationFrame(() => marker.classList.add("fv-thumb-marker-live"));
+    }
+  }
 
   function reveal(thumb: HTMLElement | undefined): void {
     if (!thumb || el.hidden || lists.pages.hidden) return;
@@ -207,6 +237,7 @@ export function createPanel(target: PanelTarget): PanelHandle {
         else thumb.removeAttribute("aria-current");
       });
 
+      place();
       reveal(thumbs[pages[0]]);
     },
     destroy() {
