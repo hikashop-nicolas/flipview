@@ -2,7 +2,7 @@
 // are text that becomes pages only once it knows how big one is. Both start from
 // the same paperwork, and this file decides which a book is.
 import type { OutlineEntry, PageSource } from "../../source";
-import { openArchive, type Archive } from "./archive";
+import { openArchive, type Archive } from "../archive";
 import { prepare, textOf, type PreparedPage } from "./document";
 import { pageContents, parse, type EpubPackage } from "./package";
 import { createFrames, type Pagination } from "./reflow";

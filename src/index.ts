@@ -21,6 +21,7 @@ export { createPdfSource, type PdfSourceOptions } from "./sources/pdf";
 export { createImageSource } from "./sources/images";
 export { createEpubSource, type EpubSourceOptions } from "./sources/epub/fixed";
 export { createHtmlSource, type HtmlSourceOptions } from "./sources/html";
+export { createComicSource, type ComicSourceOptions } from "./sources/comic";
 export { type ToolbarButtons, type ToolbarTarget } from "./toolbar";
 export { type ZoomOptions, type ZoomHandle } from "./zoom";
 export { createDeepLink, type DeepLink } from "./deeplink";

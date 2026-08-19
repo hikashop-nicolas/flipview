@@ -4,7 +4,7 @@
 // relative path, and a browser handed the file on its own cannot follow any of
 // them: there is no archive to be relative to. So every reference is rewritten to
 // a blob URL before the page is shown.
-import type { Archive } from "./archive";
+import type { Archive } from "../archive";
 import { resolvePath } from "./package";
 
 /** A page that is one picture and nothing else, which most comics and manga are. */

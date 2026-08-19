@@ -8,7 +8,7 @@
  */
 export interface PageSource {
   /**
-   * What kind of document this is: "pdf", "images", and later "epub". Only for a
+   * What kind of document this is: "pdf", "epub", "images", "html", "cbz". Only for a
    * host that wants to report it; the viewer never branches on it, because a
    * viewer that branches on the format is a viewer with the format inside it.
    */

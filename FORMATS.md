@@ -16,7 +16,8 @@ appears outside `src/sources`. The drift is gradual and every single import look
 reasonable on its own, so it is checked rather than trusted.
 
 Today: **PDF** (pdf.js), **images** (a folder of pictures), **EPUB** (fixed-layout
-and reflowable), and **HTML pages** (a folder of files the site already serves). What follows was written before the EPUB work and is
+and reflowable), **CBZ** (a zip of pictures), and **HTML pages** (a folder of files
+the site already serves). What follows was written before the EPUB work and is
 kept as the record of it: each step says what it added and what it cost.
 
 ## What a format needs from the contract

@@ -5,7 +5,7 @@
 // column offset, and the whole book is the sum of them. This is how every EPUB
 // reader in a browser does it, because the browser is the only thing that knows
 // how the text will break.
-import type { Archive } from "./archive";
+import type { Archive } from "../archive";
 import { resolvePath } from "./package";
 
 export interface Section {

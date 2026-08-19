@@ -4,8 +4,9 @@
 folder of pages, and turn them.
 
 A standalone, framework-agnostic, client-side **page-flip book viewer**. It turns a
-**PDF**, an **EPUB**, a **folder of images** or a **folder of HTML pages** into a book
-with real turning pages, in the browser. No server, no upload, no account.
+**PDF**, an **EPUB**, a **comic archive**, a **folder of images** or a **folder of
+HTML pages** into a book with real turning pages, in the browser. No server, no
+upload, no account.
 
 Everything a reader is offered is here: a toolbar, zoom and pan, full-text search, the
 document's own table of contents and thumbnails in a side panel, deep links, a
@@ -63,13 +64,14 @@ time; without it those pages come out blank white, with nothing logged. Copy
 
 ## Formats
 
-PDF, EPUB, a folder of images, a folder of HTML pages. The viewer knows nothing about
+PDF, EPUB, CBZ, a folder of images, a folder of HTML pages. The viewer knows nothing about
 any of them: everything format-specific lives in `src/sources` behind one contract,
 and a layering check in `npm test` keeps it there. [FORMATS.md](FORMATS.md) is the
 design, and what each format costs to support.
 
 ```ts
 import {
+  createComicSource,
   createEpubSource,
   createHtmlSource,
   createImageSource,
@@ -78,9 +80,15 @@ import {
 
 await createPdfSource({ url: "/catalogue.pdf", workerSrc });     // needs pdfjs-dist
 await createEpubSource({ url: "/book.epub" });                   // needs fflate
+await createComicSource({ url: "/issue-1.cbz" });                // needs fflate
 await createImageSource(["/p1.jpg", "/p2.jpg", "/p3.jpg"]);      // needs nothing
 await createHtmlSource(["/pages/01.html", "/pages/02.html"]);    // needs nothing
 ```
+
+A **CBZ** is a zip of pictures with no manifest, so the pages are its filenames in
+natural order: page 10 comes after page 9, and the sidecars a Mac leaves in an
+archive are passed over. CBR is deliberately not supported: RAR needs a decoder
+whose licence and size are both worse than telling someone to rezip.
 
 An EPUB can be **fixed-layout**, whose pages were drawn at a size, or **reflowable**,
 which is text until it knows how big a page is: the book says which it is and the
