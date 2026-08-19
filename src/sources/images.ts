@@ -18,6 +18,12 @@ export async function createImageSource(urls: string[]): Promise<PageSource> {
       canvas.style.height = "100%";
       canvas.getContext("2d")?.drawImage(img, 0, 0);
     },
+    locate: (index) => String(index + 1),
+    async find(locator) {
+      const page = Number(locator);
+
+      return Number.isFinite(page) && page >= 1 && page <= urls.length ? page - 1 : null;
+    },
     destroy() {},
   };
 }

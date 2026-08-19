@@ -3,10 +3,20 @@ import { describe, expect, it, vi } from "vitest";
 import { createDeepLink } from "./deeplink";
 
 describe("createDeepLink", () => {
-  it("tracks the page it is given", () => {
+  it("stores the place it is given, whatever that place is", () => {
     const link = createDeepLink("first", vi.fn())!;
-    link.write(11);
+    link.write("12");
     expect(location.hash).toContain("first=12");
+    expect(link.read()).toBe("12");
+    link.destroy();
+  });
+
+  it("keeps a locator that is not a number", () => {
+    // A book that reflows names a place in its own terms, and the hash carries it
+    // without knowing what it means.
+    const link = createDeepLink("spot", vi.fn())!;
+    link.write("s3:0.42");
+    expect(link.read()).toBe("s3:0.42");
     link.destroy();
   });
 

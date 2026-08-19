@@ -41,6 +41,20 @@ export interface PageSource {
   words?(index: number): Promise<string>;
   /** The document's own table of contents, where it has one. */
   outline?(): Promise<OutlineEntry[]>;
+  /**
+   * Where page `index` begins, in the document's own terms.
+   *
+   * A page number is a place only while the pages hold still. As soon as a
+   * document can be laid out differently, page 40 on one screen is page 55 on
+   * another, and a link to "page 40" is a link to nowhere in particular. A
+   * locator is whatever that document uses instead: a page number for a PDF, a
+   * position in the text for a book that reflows.
+   *
+   * The string is the source's own business; nothing else reads into it.
+   */
+  locate?(index: number): string | null;
+  /** Which page a locator is on now, or null when it cannot be found. */
+  find?(locator: string): Promise<number | null>;
   destroy(): void;
 }
 

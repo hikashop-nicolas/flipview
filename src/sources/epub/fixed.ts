@@ -119,6 +119,23 @@ export async function createEpubSource(opts: EpubSourceOptions): Promise<PageSou
       return pageContents(book.contents, (path) => byPath.get(path) ?? null);
     },
 
+    /**
+     * One spine item is one page here and always will be, so the page number is a
+     * real place and the link stays readable. A book that reflows cannot say that,
+     * which is why the locator exists at all.
+     */
+    locate: (index) => String(index + 1),
+    async find(locator) {
+      const page = Number(locator);
+
+      if (Number.isFinite(page) && page >= 1 && page <= pages.length) return page - 1;
+
+      // A path into the archive is also a locator, which is what the contents use.
+      const at = pages.findIndex((item) => item.path === locator);
+
+      return at >= 0 ? at : null;
+    },
+
     destroy() {
       archive.destroy();
       prepared.clear();

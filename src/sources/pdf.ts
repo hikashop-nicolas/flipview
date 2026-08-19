@@ -132,6 +132,15 @@ export async function createPdfSource(opts: PdfSourceOptions): Promise<PageSourc
         .trim();
     },
 
+    // A PDF's pages hold still, so the page number is the locator, and a link
+    // written today is the same link tomorrow.
+    locate: (index) => String(index + 1),
+    async find(locator) {
+      const page = Number(locator);
+
+      return Number.isFinite(page) && page >= 1 && page <= doc.numPages ? page - 1 : null;
+    },
+
     destroy() {
       void doc.destroy();
     },

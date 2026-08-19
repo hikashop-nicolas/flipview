@@ -459,10 +459,24 @@ export function createFlipview(
   let pendingLayout = false;
   let lastWidth = container.clientWidth;
 
+  /** Where a page is, in the document's own terms, falling back to its number. */
+  function locatorFor(index: number): string {
+    return source.locate?.(index) ?? String(index + 1);
+  }
+
+  /** The page a locator names now, which is not always the page it named before. */
+  async function pageFor(locator: string): Promise<number | null> {
+    if (source.find) return source.find(locator).catch(() => null);
+
+    const page = Number(locator);
+
+    return Number.isFinite(page) && page >= 1 && page <= source.pageCount ? page - 1 : null;
+  }
+
   function announce(index: number): void {
     bar?.update(index);
     panel?.mark(spread(index));
-    link?.write(index);
+    link?.write(locatorFor(index));
     options.onPageChange?.(index);
     emit("page", { page: index + 1, pages: source.pageCount });
   }
@@ -586,7 +600,7 @@ export function createFlipview(
       link.remove();
     },
     async share() {
-      link?.write(flip.getCurrentPageIndex());
+      link?.write(locatorFor(flip.getCurrentPageIndex()));
       try {
         await navigator.clipboard.writeText(location.href);
         emit("share", { url: location.href, copied: true });
@@ -630,10 +644,16 @@ export function createFlipview(
 
   // Hash changes come from outside, so they drive the engine without writing back.
   const link = opt.deepLink
-    ? createDeepLink(opt.deepLink === true ? "page" : opt.deepLink, (index) => {
-        if (index !== flip.getCurrentPageIndex()) handle.goTo(index);
+    ? createDeepLink(opt.deepLink === true ? "page" : opt.deepLink, (value) => {
+        void pageFor(value).then((index) => {
+          if (index !== null && index !== flip.getCurrentPageIndex()) handle.goTo(index);
+        });
       })
     : null;
+
+  // Read now, acted on later. Finding the page a locator names can take a moment,
+  // and by then the first page turn has written its own place over it.
+  const linked = link?.read() ?? null;
 
   // Built now, filled when the document gives up its contents: a panel that only
   // exists once a promise has resolved cannot be opened before then.
@@ -708,8 +728,11 @@ export function createFlipview(
   // The toolbar was not in the DOM when the first size was computed.
   relayout();
 
-  const linked = link?.read();
-  if (linked != null && linked > 0 && linked < source.pageCount) handle.goTo(linked);
+  if (linked != null) {
+    void pageFor(linked).then((index) => {
+      if (index !== null && index > 0 && index < source.pageCount) handle.goTo(index);
+    });
+  }
 
   options.onReady?.(handle);
   emit("ready", { pages: source.pageCount, kind: source.kind });
