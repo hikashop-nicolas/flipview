@@ -27,10 +27,14 @@
     "prepare": "npm run build"
   },
   "peerDependencies": {
-    "pdfjs-dist": ">=4"
+    "pdfjs-dist": ">=4",
+    "fflate": ">=0.8"
   },
   "peerDependenciesMeta": {
     "pdfjs-dist": {
+      "optional": true
+    },
+    "fflate": {
       "optional": true
     }
   },

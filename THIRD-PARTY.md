@@ -18,7 +18,15 @@ is the full list.
 
 - Source: https://github.com/mozilla/pdf.js (`pdfjs-dist`)
 - Licence: Apache-2.0
-- Not vendored: an optional peer dependency the host installs and configures.
+- Not vendored: an optional peer dependency the host installs and configures. Only a
+  host that opens PDFs needs it.
+
+## fflate
+
+- Source: https://github.com/101arrowz/fflate
+- Licence: MIT
+- Not vendored: an optional peer dependency, and only a host that opens EPUBs needs
+  it, since an EPUB is a zip.
 
 ### Our changes to StPageFlip
 
