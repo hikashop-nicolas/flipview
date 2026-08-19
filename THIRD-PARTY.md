@@ -43,6 +43,20 @@ is the full list, and the table at the end of this file summarises them.
 | `const enum` to `enum`, type-only imports | ours, needed to consume it as source |
 | Unit tests for the geometry helpers | ours |
 
+## Demo documents
+
+`demo/public/sample.azw3` is *Alice's Adventures in Wonderland*, produced by
+[Standard Ebooks](https://standardebooks.org/ebooks/lewis-carroll/alices-adventures-in-wonderland/john-tenniel)
+from the Project Gutenberg text and scans from the Internet Archive, with John
+Tenniel's illustrations. The text and the artwork are in the US public domain, and
+Standard Ebooks dedicate their own work on it to the public domain under
+[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). It is redistributed
+here unmodified, as something real for the Kindle reader to open.
+
+`demo/public/sample.fb2` is built from `reflow.epub`, the same book from Project
+Gutenberg, by `build/make-fb2.mjs`. `demo/public/sample.cbz` and the EPUBs are
+covered where they came from.
+
 ## Demo audio
 
 The two page-turn recordings in `demo/public` are from Pixabay, under the Pixabay

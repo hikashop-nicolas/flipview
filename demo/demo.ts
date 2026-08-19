@@ -8,6 +8,7 @@ import {
   createComicSource,
   createEpubSource,
   createFb2Source,
+  createMobiSource,
   createFlipview,
   createImageSource,
   createPdfSource,
@@ -114,8 +115,17 @@ document.getElementById("light")!.addEventListener("click", () => {
 document.getElementById("file")!.addEventListener("change", (e) => {
   const files = Array.from((e.target as HTMLInputElement).files ?? []);
   if (!files.length) return;
-  if (files[0].name.toLowerCase().endsWith(".epub")) {
+  const name = files[0].name.toLowerCase();
+  const ends = (...types: string[]): boolean => types.some((type) => name.endsWith(type));
+
+  if (ends(".epub")) {
     void open(async () => createEpubSource({ data: await files[0].arrayBuffer() }));
+  } else if (ends(".fb2", ".fb2.zip", ".fbz")) {
+    void open(async () => createFb2Source({ data: await files[0].arrayBuffer() }));
+  } else if (ends(".mobi", ".azw", ".azw3", ".prc")) {
+    void open(async () => createMobiSource({ data: await files[0].arrayBuffer() }));
+  } else if (ends(".cbz")) {
+    void open(async () => createComicSource({ data: await files[0].arrayBuffer() }));
   } else if (files[0].type === "application/pdf") {
     void open(async () => createPdfSource({ data: await files[0].arrayBuffer(), workerSrc, wasmUrl }));
   } else {
@@ -131,6 +141,8 @@ if (wanted.get("doc") === "epub" || wanted.get("doc") === "reflow") {
   void open(() => createEpubSource({ url: file }));
 } else if (wanted.get("doc") === "fb2") {
   void open(() => createFb2Source({ url: "./sample.fb2" }));
+} else if (wanted.get("doc") === "mobi") {
+  void open(() => createMobiSource({ url: "./sample.azw3" }));
 } else if (wanted.get("doc") === "cbz") {
   void open(() => createComicSource({ url: "./sample.cbz" }));
 } else {

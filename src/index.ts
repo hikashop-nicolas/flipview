@@ -23,6 +23,7 @@ export { createEpubSource, type EpubSourceOptions } from "./sources/epub/fixed";
 export { createHtmlSource, type HtmlSourceOptions } from "./sources/html";
 export { createComicSource, type ComicSourceOptions } from "./sources/comic";
 export { createFb2Source, type Fb2SourceOptions } from "./sources/fb2";
+export { createMobiSource, type MobiSourceOptions } from "./sources/mobi/index";
 export { type ToolbarButtons, type ToolbarTarget } from "./toolbar";
 export { type ZoomOptions, type ZoomHandle } from "./zoom";
 export { createDeepLink, type DeepLink } from "./deeplink";

@@ -16,8 +16,14 @@ appears outside `src/sources`. The drift is gradual and every single import look
 reasonable on its own, so it is checked rather than trusted.
 
 Today: **PDF** (pdf.js), **images** (a folder of pictures), **EPUB** (fixed-layout
-and reflowable), **CBZ** (a zip of pictures), and **HTML pages** (a folder of files
-the site already serves). What follows was written before the EPUB work and is
+and reflowable), **MOBI and AZW3** (Kindle, without DRM), **FB2** (FictionBook),
+**CBZ** (a zip of pictures), and **HTML pages** (a folder of files the site already
+serves).
+
+Everything that reflows shares one road: `src/sources/flow` takes sections of HTML
+and makes pages of them. EPUB, FB2 and Kindle differ in how they are read, not in
+how they are shown, so they differ in the file that produces the sections and in
+nothing else. What follows was written before the EPUB work and is
 kept as the record of it: each step says what it added and what it cost.
 
 ## What a format needs from the contract

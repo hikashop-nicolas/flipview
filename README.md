@@ -4,8 +4,9 @@
 folder of pages, and turn them.
 
 A standalone, framework-agnostic, client-side **page-flip book viewer**. It turns a
-**PDF**, an **EPUB**, a **comic archive**, a **folder of images** or a **folder of
-HTML pages** into a book with real turning pages, in the browser. No server, no
+**PDF**, an **EPUB**, a **Kindle book**, a **FictionBook**, a **comic archive**, a
+**folder of images** or a **folder of HTML pages** into a book with real turning
+pages, in the browser. No server, no
 upload, no account.
 
 Everything a reader is offered is here: a toolbar, zoom and pan, full-text search, the
@@ -64,7 +65,8 @@ time; without it those pages come out blank white, with nothing logged. Copy
 
 ## Formats
 
-PDF, EPUB, CBZ, a folder of images, a folder of HTML pages. The viewer knows nothing about
+PDF, EPUB, MOBI and AZW3, FB2, CBZ, a folder of images, a folder of HTML pages. The
+viewer knows nothing about
 any of them: everything format-specific lives in `src/sources` behind one contract,
 and a layering check in `npm test` keeps it there. [FORMATS.md](FORMATS.md) is the
 design, and what each format costs to support.
@@ -73,17 +75,31 @@ design, and what each format costs to support.
 import {
   createComicSource,
   createEpubSource,
+  createFb2Source,
   createHtmlSource,
   createImageSource,
+  createMobiSource,
   createPdfSource,
 } from "flipview";
 
 await createPdfSource({ url: "/catalogue.pdf", workerSrc });     // needs pdfjs-dist
 await createEpubSource({ url: "/book.epub" });                   // needs fflate
 await createComicSource({ url: "/issue-1.cbz" });                // needs fflate
+await createFb2Source({ url: "/book.fb2" });                     // fflate if zipped
+await createMobiSource({ url: "/book.azw3" });                   // needs nothing
 await createImageSource(["/p1.jpg", "/p2.jpg", "/p3.jpg"]);      // needs nothing
 await createHtmlSource(["/pages/01.html", "/pages/02.html"]);    // needs nothing
 ```
+
+A **Kindle book**, MOBI or AZW3, is unpacked and read: an AZW3 is the XHTML of what
+was an EPUB, and an older MOBI is one HTML document broken up by page breaks. Books
+with DRM are refused, since the encryption is the point of it. So are the few older
+MOBI files packed with HUFF/CDIC rather than PalmDOC: a decompressor that is nearly
+right produces a book of plausible nonsense, so it says so instead.
+
+An **FB2** is one XML file with its pictures inside it as base64, zipped or not. It
+reflows, and it gets a first page of its own from what it says about itself: its
+cover, its title and who wrote it.
 
 A **CBZ** is a zip of pictures with no manifest, so the pages are its filenames in
 natural order: page 10 comes after page 9, and the sidecars a Mac leaves in an
