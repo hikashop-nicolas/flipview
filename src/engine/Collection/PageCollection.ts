@@ -61,7 +61,11 @@ export abstract class PageCollection {
 
         let start = 0;
         if (this.isShowCover) {
-            this.pages[0].setDensity(PageDensity.HARD);
+            // Ours: only where the page did not say. A cover is usually rigid,
+            // but a caller that has said otherwise means it.
+            if (!this.pages[0].hasChosenDensity()) {
+                this.pages[0].setDensity(PageDensity.HARD);
+            }
             this.landscapeSpread.push([start]);
             start++;
         }
@@ -70,7 +74,10 @@ export abstract class PageCollection {
             if (i < this.pages.length - 1) this.landscapeSpread.push([i, i + 1]);
             else {
                 this.landscapeSpread.push([i]);
-                this.pages[i].setDensity(PageDensity.HARD);
+
+                if (!this.pages[i].hasChosenDensity()) {
+                    this.pages[i].setDensity(PageDensity.HARD);
+                }
             }
         }
     }

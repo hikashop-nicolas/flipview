@@ -26,11 +26,19 @@ export class HTMLPageCollection extends PageCollection {
 
     public load(): void {
         for (const pageElement of this.pagesElement) {
+            const declared = pageElement.dataset['density'];
             const page = new HTMLPage(
                 this.render,
                 pageElement,
-                pageElement.dataset['density'] === 'hard' ? PageDensity.HARD : PageDensity.SOFT
+                declared === 'hard' ? PageDensity.HARD : PageDensity.SOFT
             );
+
+            // Ours: a page that says what it is keeps it. Without this the
+            // collection makes every cover rigid, and "rigid covers off" does
+            // nothing at all.
+            if (declared !== undefined) {
+                page.chooseDensity(declared === 'hard' ? PageDensity.HARD : PageDensity.SOFT);
+            }
 
             page.load();
             this.pages.push(page);

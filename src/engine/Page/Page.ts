@@ -51,6 +51,14 @@ export abstract class Page {
 
     /** Density at creation */
     protected createdDensity: PageDensity;
+    /**
+     * Whether the density came from the page itself rather than from a default.
+     *
+     * Ours: the collection makes the cover and a lone last page rigid whether or
+     * not anyone asked, which leaves a caller no way to say "not rigid". A page
+     * that has chosen is left alone.
+     */
+    protected chosenDensity = false;
     /** Density at the time of rendering (Depends on neighboring pages) */
     protected nowDrawingDensity: PageDensity;
 
@@ -93,6 +101,16 @@ export abstract class Page {
      * 
      * @param {PageDensity} density 
      */
+    /** Says that this page's density is its own, and not to be overridden. */
+    public chooseDensity(density: PageDensity): void {
+        this.chosenDensity = true;
+        this.setDensity(density);
+    }
+
+    public hasChosenDensity(): boolean {
+        return this.chosenDensity;
+    }
+
     public setDensity(density: PageDensity): void {
         this.createdDensity = density;
         this.nowDrawingDensity = density;

@@ -200,9 +200,10 @@ export function createFlipview(
       // engine, so the one element serves both faces through the rotation and
       // backface-visibility blanks it halfway: the first and last turn visibly
       // jump. Soft covers bend like every other page and turn cleanly.
-      if (opt.hardCovers && (i === 0 || i === count - 1)) {
-        page.setAttribute("data-density", "hard");
-      }
+      // Said out loud either way: the engine makes a cover rigid on its own
+      // unless the page has chosen, and then the setting would do nothing.
+      const cover = i === 0 || i === count - 1;
+      page.setAttribute("data-density", opt.hardCovers && cover ? "hard" : "soft");
       const inner = document.createElement("div");
       inner.className = "fv-page-inner";
       const num = document.createElement("span");
