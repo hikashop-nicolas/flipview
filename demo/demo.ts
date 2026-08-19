@@ -5,7 +5,9 @@ const wasmUrl = new URL("../node_modules/pdfjs-dist/wasm/", import.meta.url).hre
 import "../src/engine/Style/stPageFlip.css";
 import "../src/flipview.css";
 import {
+  createComicSource,
   createEpubSource,
+  createFb2Source,
   createFlipview,
   createImageSource,
   createPdfSource,
@@ -127,6 +129,10 @@ document.getElementById("file")!.addEventListener("change", (e) => {
 if (wanted.get("doc") === "epub" || wanted.get("doc") === "reflow") {
   const file = wanted.get("doc") === "reflow" ? "./reflow.epub" : "./fixed.epub";
   void open(() => createEpubSource({ url: file }));
+} else if (wanted.get("doc") === "fb2") {
+  void open(() => createFb2Source({ url: "./sample.fb2" }));
+} else if (wanted.get("doc") === "cbz") {
+  void open(() => createComicSource({ url: "./sample.cbz" }));
 } else {
   const doc =
     wanted.get("doc") === "outline"
