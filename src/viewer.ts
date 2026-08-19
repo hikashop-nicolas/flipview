@@ -299,6 +299,8 @@ export function createFlipview(
     engine.on("changeState", (e) => {
       settled = (e as { data: string }).data === "read";
       if (settled && pendingLayout) relayout();
+      // The engine has stopped moving pages about, so their widths are final.
+      if (settled) scheduleRescale();
     });
 
     return engine;
@@ -342,7 +344,7 @@ export function createFlipview(
 
         // The page may have been sized again while this was being built, and a
         // page drawn at one size and scaled for another loses its own margin.
-        rescaleMounts();
+        scheduleRescale();
 
         shells[index].classList.add("fv-rendered", "fv-page-mounted");
         rendered.push(index);
@@ -494,6 +496,16 @@ export function createFlipview(
    * to fit, so a resize means a new scale. A picture stretches on its own; this
    * does not.
    */
+  /**
+   * After the engine has laid out, not before. A page's width changes when the
+   * engine positions it, which is after the viewer has sized the book and after a
+   * page has been mounted: measuring any earlier gives the width the page had a
+   * moment ago, and the frame keeps a scale that is slightly too large.
+   */
+  function scheduleRescale(): void {
+    requestAnimationFrame(() => requestAnimationFrame(rescaleMounts));
+  }
+
   function rescaleMounts(): void {
     for (const frame of root.querySelectorAll<HTMLElement>(".fv-page-frame[data-fv-width]")) {
       const drawn = Number(frame.dataset.fvWidth);
@@ -592,7 +604,7 @@ export function createFlipview(
     flip.getSettings().minWidth = next.width;
     flip.update();
     rescaleText();
-    rescaleMounts();
+    scheduleRescale();
     zoom?.refresh();
     if (next.width > renderWidth * RERENDER_RATIO) {
       renderWidth = next.width;
