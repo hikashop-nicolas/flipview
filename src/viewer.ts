@@ -435,9 +435,21 @@ export function createFlipview(
     return root.closest<HTMLElement>(".fv-lightbox");
   }
 
+  /**
+   * The width the book itself has. The panel stands beside it inside the stage
+   * and takes its width out of it, so a stage measured whole sizes a book that
+   * overflows the moment the panel is opened.
+   */
+  function roomForBook(): number {
+    const whole = stage.clientWidth || 800;
+    if (!sidePanel?.open()) return whole;
+    const gap = Number.parseFloat(getComputedStyle(stage).columnGap) || 12;
+    return Math.max(240, whole - sidePanel.el.offsetWidth - gap);
+  }
+
   /** Size one page for the given orientation, keeping the spread inside the room. */
   function fit(portrait: boolean): { width: number; height: number } {
-    const available = stage.clientWidth || 800;
+    const available = roomForBook();
     const chrome = (root.querySelector(".fv-toolbar")?.clientHeight ?? 0) + 24;
     const filling = filler();
 
@@ -467,7 +479,7 @@ export function createFlipview(
   function wantPortrait(): boolean {
     if (opt.mode === "double") return false;
     if (opt.mode === "single") return true;
-    return (stage.clientWidth || 800) < opt.breakpoint;
+    return roomForBook() < opt.breakpoint;
   }
 
   /**
@@ -703,6 +715,9 @@ export function createFlipview(
     togglePanel() {
       panel?.toggle();
       panel?.mark(spread(flip.getCurrentPageIndex()));
+      // The stage is no wider than it was, but the book's share of it changed.
+      // Nothing observes that, so the layout is asked for here.
+      relayout();
     },
     async search(query) {
       hits = await finder.find(query);

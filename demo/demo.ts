@@ -46,8 +46,8 @@ hotspots.checked = asked("hotspots", false);
 // Regions over the real catalogue, on the page of engravings: what a hotspot is
 // for, over things that were actually for sale.
 const SCAN_SPOTS = [
-  { page: 4, x: 0.26, y: 0.11, width: 0.3, height: 0.32, label: "Marguerite Carnation, 6d a packet", data: { product: "66" } },
-  { page: 4, x: 0.655, y: 0.45, width: 0.235, height: 0.185, label: "Calendula pluvialis, 3d a packet", data: { product: "51" } },
+  { page: 4, x: 0.274, y: 0.115, width: 0.3, height: 0.325, label: "Marguerite Carnation, 6d a packet", data: { product: "66" } },
+  { page: 4, x: 0.645, y: 0.425, width: 0.2, height: 0.195, label: "Calendula pluvialis, 3d a packet", data: { product: "51" } },
 ];
 
 // Three regions on the generated sample, one of each kind: a link out, a jump to
