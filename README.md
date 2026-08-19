@@ -67,7 +67,7 @@ sources need nothing.
 | `showCover` | `false` | stand page 1 alone as a cover instead of pairing it |
 | `hardCovers` | `false` | make the covers rigid rather than bending |
 | `pageCorners` | `true` | lift the page corner under the pointer |
-| `deepLink` | `false` | track the page in the URL hash, `true` uses `#page=N` |
+| `deepLink` | `false` | track the page in the URL hash, `true` uses `#page=N`, a string names the parameter |
 | `rtl` | `false` | right-to-left reading, spine and page order swap sides |
 | `soundUrl` | none | page-turn recordings, one or several. Supplying them turns the sound on |
 | `soundVolume` | `0.35` | how loud the page turn is |
@@ -109,6 +109,19 @@ Each one is a real link or a real button, named for a screen reader by its `labe
 so it is reachable by keyboard and can be opened in a new tab. They are invisible
 until hovered or focused; add `fv-hotspots-shown` to the root to show them all, which
 is what a shoppable catalogue usually wants.
+
+## Two books on one page
+
+Everything is per-instance except the URL, which the page shares. Give each book
+that tracks its page its own parameter:
+
+```js
+createFlipview(first, source, { deepLink: true });      // #page=N
+createFlipview(second, other, { deepLink: "page2" });   // #page2=N
+```
+
+A second book asking for a name that is already tracked is refused rather than
+allowed to fight over it: it warns, and simply does not track its page.
 
 ## Counting what readers do
 

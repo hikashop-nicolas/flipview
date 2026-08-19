@@ -16,8 +16,8 @@ export interface PanelHandle {
   /** Caps the panel to the height of the book beside it, in pixels. */
   fit(height: number): void;
   open(): boolean;
-  /** Marks which page the reader is on. */
-  mark(index: number): void;
+  /** Marks the pages the reader is looking at, and brings them into view. */
+  mark(pages: number[]): void;
   destroy(): void;
 }
 
@@ -109,7 +109,21 @@ export function createPanel(target: PanelTarget): PanelHandle {
     thumb.type = "button";
     thumb.className = "fv-thumb";
     thumb.setAttribute("aria-label", t("pageOf", { page: index + 1, total: target.pageCount }));
-    thumb.innerHTML = `<span class="fv-thumb-number">${index + 1}</span>`;
+
+    // The picture's box exists before the picture does. Without it the list grows
+    // as the thumbnails arrive, and a scroll made while it was short leaves the
+    // page a reader is on somewhere far below.
+    const img = new Image();
+    img.className = "fv-thumb-img";
+    img.alt = "";
+    img.decoding = "async";
+    thumb.appendChild(img);
+
+    const number = document.createElement("span");
+    number.className = "fv-thumb-number";
+    number.textContent = String(index + 1);
+    thumb.appendChild(number);
+
     thumb.addEventListener("click", () => target.goTo(index));
     lists.pages.appendChild(thumb);
     thumbs.push(thumb);
@@ -123,12 +137,48 @@ export function createPanel(target: PanelTarget): PanelHandle {
       const url = await target.preview(index, THUMB_WIDTH).catch(() => null);
       if (url === null) continue;
 
-      const img = new Image();
+      const img = thumbs[index].querySelector<HTMLImageElement>(".fv-thumb-img");
+      if (!img) continue;
+
       img.src = url;
-      img.alt = "";
-      img.decoding = "async";
-      thumbs[index].prepend(img);
+
+      // The first page that paints says what shape this document's pages are, so
+      // the boxes below it stop being a guess.
+      if (index === 0) {
+        img.addEventListener("load", () => {
+          if (img.naturalWidth > 0) {
+            el.style.setProperty("--fv-thumb-ratio", `${img.naturalWidth} / ${img.naturalHeight}`);
+          }
+        });
+      }
     }
+
+    // Anything that shifted while the pictures arrived is put right here.
+    reveal(thumbs[here[0]]);
+  }
+
+  /**
+   * Scrolls the list, and only the list, far enough to show a thumbnail. A page
+   * turn that leaves the marked page somewhere out of sight is a mark nobody sees,
+   * which is the same as no mark at all.
+   */
+  /** The pages last marked, so painting can put the scroll right afterwards. */
+  let here: number[] = [];
+
+  function reveal(thumb: HTMLElement | undefined): void {
+    if (!thumb || el.hidden || lists.pages.hidden) return;
+
+    const list = lists.pages;
+    const box = thumb.getBoundingClientRect();
+    const frame = list.getBoundingClientRect();
+
+    if (box.top >= frame.top && box.bottom <= frame.bottom) return;
+
+    // Assigned rather than animated. scrollIntoView would take the whole page with
+    // it, and a smooth scrollTo is an animation the browser is free to drop: it is
+    // dropped in at least one browser, and a thumbnail that never arrives reads
+    // exactly like a mark that was never made.
+    list.scrollTop += box.top - frame.top - 8;
   }
 
   setOutline([]);
@@ -145,12 +195,19 @@ export function createPanel(target: PanelTarget): PanelHandle {
       if (!el.hidden) void paint();
     },
     open: () => !el.hidden,
-    mark(index) {
+    mark(pages) {
+      // Both pages of a spread, not just the one the engine counts from: a reader
+      // looking at pages 4 and 5 is looking at two pages.
+      here = pages;
+      const shown = new Set(pages);
+
       thumbs.forEach((thumb, at) => {
-        thumb.classList.toggle("fv-thumb-here", at === index);
-        if (at === index) thumb.setAttribute("aria-current", "true");
+        thumb.classList.toggle("fv-thumb-here", shown.has(at));
+        if (shown.has(at)) thumb.setAttribute("aria-current", "true");
         else thumb.removeAttribute("aria-current");
       });
+
+      reveal(thumbs[pages[0]]);
     },
     destroy() {
       el.remove();

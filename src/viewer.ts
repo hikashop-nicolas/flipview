@@ -444,7 +444,7 @@ export function createFlipview(
 
   function announce(index: number): void {
     bar?.update(index);
-    panel?.mark(index);
+    panel?.mark(spread(index));
     link?.write(index);
     options.onPageChange?.(index);
     emit("page", { page: index + 1, pages: source.pageCount });
@@ -460,6 +460,20 @@ export function createFlipview(
     } catch (err) {
       console.error("flipview: an onEvent handler threw", err);
     }
+  }
+
+  /**
+   * The pages on show. The engine counts a spread by its left page, and pairs
+   * them the way the book is bound: with a cover, page 1 stands alone and the
+   * pairs start odd; without one they start even. The last page can stand alone
+   * for the same reason.
+   */
+  function spread(index: number): number[] {
+    if (flip.getOrientation() !== "landscape") return [index];
+
+    const paired = opt.showCover ? index % 2 === 1 : index % 2 === 0;
+
+    return paired && index + 1 < source.pageCount ? [index, index + 1] : [index];
   }
 
   const finder = createSearch(source);
@@ -520,7 +534,7 @@ export function createFlipview(
     last: () => handle.goTo(source.pageCount - 1),
     togglePanel() {
       panel?.toggle();
-      panel?.mark(flip.getCurrentPageIndex());
+      panel?.mark(spread(flip.getCurrentPageIndex()));
     },
     async search(query) {
       hits = await finder.find(query);
@@ -623,7 +637,7 @@ export function createFlipview(
     sidePanel = panel;
     stage.prepend(panel.el);
     panel.fit(book.getBoundingClientRect().height);
-    panel.mark(flip.getCurrentPageIndex());
+    panel.mark(spread(flip.getCurrentPageIndex()));
 
     void (source.outline ? source.outline() : Promise.resolve([]))
       .catch(() => [])

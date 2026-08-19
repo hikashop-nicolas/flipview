@@ -103,10 +103,15 @@
   cursor: pointer;
 }
 
-.fv-thumb img {
+.fv-thumb-img {
   display: block;
   width: 100%;
-  height: auto;
+  /* The box exists before the picture does, so the list does not grow underneath
+     a reader as the thumbnails arrive. The ratio is a guess until the first page
+     paints and says what shape this document's pages are. */
+  aspect-ratio: var(--fv-thumb-ratio, 1 / 1.414);
+  object-fit: contain;
+  background: rgba(0, 0, 0, 0.06);
   border-radius: 3px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.24);
 }

@@ -9,7 +9,26 @@ export interface DeepLink {
   destroy(): void;
 }
 
-export function createDeepLink(param: string, onNavigate: (index: number) => void): DeepLink {
+/**
+ * Which parameters are already spoken for on this page. Two books both writing
+ * "page" would overwrite each other's number on every turn, and both would jump
+ * to the same page when the link is opened: whoever asks second is refused, and
+ * says so, rather than the two of them fighting silently.
+ */
+const claimed = new Set<string>();
+
+export function createDeepLink(param: string, onNavigate: (index: number) => void): DeepLink | null {
+  if (claimed.has(param)) {
+    console.warn(
+      `flipview: "${param}" is already tracked by another book on this page. ` +
+        "Give this one its own name, for example deepLink: \"page2\".",
+    );
+
+    return null;
+  }
+
+  claimed.add(param);
+
   function params(): URLSearchParams {
     return new URLSearchParams(location.hash.replace(/^#/, ""));
   }
@@ -40,6 +59,7 @@ export function createDeepLink(param: string, onNavigate: (index: number) => voi
     write,
     destroy() {
       window.removeEventListener("hashchange", onHashChange);
+      claimed.delete(param);
     },
   };
 }
