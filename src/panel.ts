@@ -15,6 +15,8 @@ export interface PanelHandle {
   setOutline(entries: OutlineEntry[]): void;
   /** Caps the panel to the height of the book beside it, in pixels. */
   fit(height: number): void;
+  /** The book now has this many pages: a document that reflows says so often. */
+  setPageCount(count: number): void;
   open(): boolean;
   /** Marks the pages the reader is looking at, and brings them into view. */
   mark(pages: number[]): void;
@@ -104,29 +106,37 @@ export function createPanel(target: PanelTarget): PanelHandle {
   const thumbs: HTMLButtonElement[] = [];
   let painted = false;
 
-  for (let index = 0; index < target.pageCount; index++) {
-    const thumb = document.createElement("button");
-    thumb.type = "button";
-    thumb.className = "fv-thumb";
-    thumb.setAttribute("aria-label", t("pageOf", { page: index + 1, total: target.pageCount }));
+  function buildThumbs(count: number): void {
+    lists.pages.replaceChildren();
+    thumbs.length = 0;
 
-    // The picture's box exists before the picture does. Without it the list grows
-    // as the thumbnails arrive, and a scroll made while it was short leaves the
-    // page a reader is on somewhere far below.
-    const img = new Image();
-    img.className = "fv-thumb-img";
-    img.alt = "";
-    img.decoding = "async";
-    thumb.appendChild(img);
+    for (let index = 0; index < count; index++) {
+      const thumb = document.createElement("button");
+      thumb.type = "button";
+      thumb.className = "fv-thumb";
+      thumb.setAttribute("aria-label", t("pageOf", { page: index + 1, total: count }));
 
-    const number = document.createElement("span");
-    number.className = "fv-thumb-number";
-    number.textContent = String(index + 1);
-    thumb.appendChild(number);
+      // The picture's box exists before the picture does. Without it the list
+      // grows as the thumbnails arrive, and a scroll made while it was short
+      // leaves the page a reader is on somewhere far below.
+      const img = new Image();
+      img.className = "fv-thumb-img";
+      img.alt = "";
+      img.decoding = "async";
+      thumb.appendChild(img);
 
-    thumb.addEventListener("click", () => target.goTo(index));
-    lists.pages.appendChild(thumb);
-    thumbs.push(thumb);
+      const number = document.createElement("span");
+      number.className = "fv-thumb-number";
+      number.textContent = String(index + 1);
+      thumb.appendChild(number);
+
+      thumb.addEventListener("click", () => target.goTo(index));
+      lists.pages.appendChild(thumb);
+      thumbs.push(thumb);
+    }
+
+    // The marker belongs to the list, and the list was just emptied.
+    lists.pages.appendChild(marker);
   }
 
   async function paint(): Promise<void> {
@@ -211,6 +221,7 @@ export function createPanel(target: PanelTarget): PanelHandle {
     list.scrollTop += box.top - frame.top - 8;
   }
 
+  buildThumbs(target.pageCount);
   setOutline([]);
   show("pages");
 
@@ -219,6 +230,16 @@ export function createPanel(target: PanelTarget): PanelHandle {
     setOutline,
     fit(height) {
       el.style.maxHeight = height > 0 ? `${height}px` : "";
+    },
+    setPageCount(count) {
+      if (count === thumbs.length) return;
+
+      // Everything painted was painted for pages that no longer exist.
+      painted = false;
+      here = [];
+      buildThumbs(count);
+
+      if (!el.hidden) void paint();
     },
     toggle() {
       el.hidden = !el.hidden;

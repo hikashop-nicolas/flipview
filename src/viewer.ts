@@ -161,36 +161,49 @@ export function createFlipview(
   container.appendChild(root);
 
   let hotspots: Hotspot[] = options.hotspots ?? [];
+  /**
+   * How many pages there are *now*. A PDF says this once; a book that reflows says
+   * something different for every size of page, so nothing may hold on to the
+   * number the source first reported.
+   */
+  let pageCount = source.pageCount;
   // Assigned once the panel is built, and used by the layout before then.
   let sidePanel: PanelHandle | null = null;
 
-  // Page shells go in first and stay; only their canvases come and go.
+  // Page shells go in first and stay; only their canvases come and go. A book
+  // that reflows builds them again when its page count changes.
   const shells: HTMLElement[] = [];
-  for (let i = 0; i < source.pageCount; i++) {
-    const page = document.createElement("div");
-    page.className = "fv-page";
-    // A page is a region a reader can be told they are on, rather than an
-    // anonymous box holding a picture.
-    page.setAttribute("role", "group");
-    page.setAttribute("aria-roledescription", t("pageRole"));
-    page.setAttribute("aria-label", t("pageOf", { page: i + 1, total: source.pageCount }));
-    // Rigid covers are opt-in. A hard page gets no temporary copy from the flip
-    // engine, so the one element serves both faces through the rotation and
-    // backface-visibility blanks it halfway: the first and last turn visibly jump.
-    // Soft covers bend like every other page and turn cleanly.
-    if (opt.hardCovers && (i === 0 || i === source.pageCount - 1)) {
-      page.setAttribute("data-density", "hard");
+
+  function buildShells(count: number): void {
+    book.replaceChildren();
+    shells.length = 0;
+
+    for (let i = 0; i < count; i++) {
+      const page = document.createElement("div");
+      page.className = "fv-page";
+      // A page is a region a reader can be told they are on, rather than an
+      // anonymous box holding a picture.
+      page.setAttribute("role", "group");
+      page.setAttribute("aria-roledescription", t("pageRole"));
+      page.setAttribute("aria-label", t("pageOf", { page: i + 1, total: count }));
+      // Rigid covers are opt-in. A hard page gets no temporary copy from the flip
+      // engine, so the one element serves both faces through the rotation and
+      // backface-visibility blanks it halfway: the first and last turn visibly
+      // jump. Soft covers bend like every other page and turn cleanly.
+      if (opt.hardCovers && (i === 0 || i === count - 1)) {
+        page.setAttribute("data-density", "hard");
+      }
+      const inner = document.createElement("div");
+      inner.className = "fv-page-inner";
+      const num = document.createElement("span");
+      num.className = "fv-page-number";
+      num.textContent = String(i + 1);
+      inner.appendChild(num);
+      page.appendChild(inner);
+      placeHotspots(inner, i);
+      book.appendChild(page);
+      shells.push(page);
     }
-    const inner = document.createElement("div");
-    inner.className = "fv-page-inner";
-    const num = document.createElement("span");
-    num.className = "fv-page-number";
-    num.textContent = String(i + 1);
-    inner.appendChild(num);
-    page.appendChild(inner);
-    placeHotspots(inner, i);
-    book.appendChild(page);
-    shells.push(page);
   }
 
   /**
@@ -213,6 +226,8 @@ export function createFlipview(
     );
   }
 
+  buildShells(pageCount);
+
   const startPortrait = wantPortrait();
   const start = fit(startPortrait);
   size(startPortrait, start);
@@ -223,25 +238,63 @@ export function createFlipview(
   const calm = window.matchMedia?.("(prefers-reduced-motion: reduce)");
   const flippingTime = () => (calm?.matches ? 1 : opt.flippingTime);
 
-  const flip = new PageFlip(book, {
-    width: start.width,
-    height: start.height,
-    size: "stretch" as SizeType,
-    minWidth: start.width,
-    maxWidth: 2000,
-    minHeight: 240,
-    maxHeight: 2600,
-    maxShadowOpacity: 0.5,
-    drawShadow: true,
-    flippingTime: flippingTime(),
-    showCover: opt.showCover,
-    showPageCorners: opt.pageCorners,
-    usePortrait: opt.mode !== "double",
-    mobileScrollSupport: false,
-    clickEventForward: true,
-    rtl: opt.rtl,
-  });
-  flip.loadFromHTML(shells);
+  /** The page the engine last showed, so a relayout is not heard as a page turn. */
+  let shown = 0;
+
+  const sounds = opt.soundUrl === undefined ? [] : [opt.soundUrl].flat();
+  const sound: FlipSound | null = sounds.length > 0 ? createFlipSound(sounds, opt.soundVolume) : null;
+
+  /**
+   * The engine, built around the shells it is given. A book that reflows gets a
+   * new one when its page count changes: the engine takes its pages once, at
+   * load, so a different number of pages is a different engine.
+   */
+  function createEngine(box: { width: number; height: number }): PageFlip {
+    const engine = new PageFlip(book, {
+      width: box.width,
+      height: box.height,
+      size: "stretch" as SizeType,
+      minWidth: box.width,
+      maxWidth: 2000,
+      minHeight: 240,
+      maxHeight: 2600,
+      maxShadowOpacity: 0.5,
+      drawShadow: true,
+      flippingTime: flippingTime(),
+      showCover: opt.showCover,
+      showPageCorners: opt.pageCorners,
+      usePortrait: opt.mode !== "double",
+      mobileScrollSupport: false,
+      clickEventForward: true,
+      rtl: opt.rtl,
+    });
+
+    engine.loadFromHTML(shells);
+
+    // The engine fires "flip" whenever it re-shows the spread, which includes
+    // every relayout: entering fullscreen, leaving it, a resize. Only a change of
+    // page is a page turn, and only a page turn should be heard.
+    engine.on("flip", (e) => {
+      const index = Number((e as { data: number }).data);
+      const turned = index !== shown;
+      shown = index;
+
+      ensureWindow(index);
+      announce(index);
+
+      if (turned) sound?.play();
+    });
+
+    engine.on("changeOrientation", () => relayout());
+    engine.on("changeState", (e) => {
+      settled = (e as { data: string }).data === "read";
+      if (settled && pendingLayout) relayout();
+    });
+
+    return engine;
+  }
+
+  let flip = createEngine(start);
 
   // Zooming transforms the book element. While zoomed, the zoom layer takes the
   // pointer in the capture phase, so a drag pans instead of starting a flip.
@@ -258,7 +311,7 @@ export function createFlipview(
   let renderWidth = start.width;
 
   async function renderPage(index: number): Promise<void> {
-    if (index < 0 || index >= source.pageCount) return;
+    if (index < 0 || index >= pageCount) return;
     if (rendered.includes(index) || pending.has(index)) return;
     pending.add(index);
     const width = renderWidth;
@@ -344,7 +397,7 @@ export function createFlipview(
   function windowAround(index: number): number[] {
     const out: number[] = [];
     for (let i = index - 2; i <= index + 3; i++) {
-      if (i >= 0 && i < source.pageCount) out.push(i);
+      if (i >= 0 && i < pageCount) out.push(i);
     }
     return out;
   }
@@ -430,8 +483,56 @@ export function createFlipview(
     }
   }
 
+  /** True while the book is being rebuilt, so a resize cannot start a second one. */
+  let paginating = false;
+
+  /**
+   * Asks a document that reflows how many pages it makes at this size, and
+   * rebuilds the book when the answer has changed.
+   *
+   * The engine takes its pages once, at load, so a different number of pages means
+   * a different engine. The reader is put back where they were by locator, since
+   * the page they were on is not the page they are on: that is what reflow means.
+   */
+  async function repaginate(box: { width: number; height: number }): Promise<void> {
+    if (!source.layout || paginating) return;
+    paginating = true;
+
+    const was = locatorFor(flip.getCurrentPageIndex());
+
+    try {
+      const count = await source.layout(box);
+
+      if (count === pageCount || count < 1) return;
+
+      pageCount = count;
+      rendered.length = 0;
+      pending.clear();
+
+      // destroy() takes the book element out of the page with it.
+      flip.destroy();
+      stage.appendChild(book);
+      buildShells(count);
+      flip = createEngine(box);
+      panel?.setPageCount(count);
+      bar?.update(0);
+
+      const index = (await pageFor(was)) ?? 0;
+
+      shown = index;
+      flip.turnToPage(index);
+      ensureWindow(index);
+      announce(index);
+    } catch (err) {
+      options.onError?.(err, -1);
+      console.error("flipview: laying the document out again failed", err);
+    } finally {
+      paginating = false;
+    }
+  }
+
   function relayout(): void {
-    if (!settled) {
+    if (!settled || paginating) {
       pendingLayout = true;
       return;
     }
@@ -439,6 +540,7 @@ export function createFlipview(
     const portrait = wantPortrait();
     const next = fit(portrait);
     size(portrait, next);
+    void repaginate(next);
     // One page wide: this decides the engine's orientation and is also written
     // onto the element as a min-width, so it has to be a real width.
     flip.getSettings().minWidth = next.width;
@@ -470,7 +572,7 @@ export function createFlipview(
 
     const page = Number(locator);
 
-    return Number.isFinite(page) && page >= 1 && page <= source.pageCount ? page - 1 : null;
+    return Number.isFinite(page) && page >= 1 && page <= pageCount ? page - 1 : null;
   }
 
   function announce(index: number): void {
@@ -478,7 +580,7 @@ export function createFlipview(
     panel?.mark(spread(index));
     link?.write(locatorFor(index));
     options.onPageChange?.(index);
-    emit("page", { page: index + 1, pages: source.pageCount });
+    emit("page", { page: index + 1, pages: pageCount });
   }
 
   /**
@@ -504,36 +606,12 @@ export function createFlipview(
 
     const paired = opt.showCover ? index % 2 === 1 : index % 2 === 0;
 
-    return paired && index + 1 < source.pageCount ? [index, index + 1] : [index];
+    return paired && index + 1 < pageCount ? [index, index + 1] : [index];
   }
 
   const finder = createSearch(source);
   let hits: SearchHit[] = [];
   let at = -1;
-
-  const sounds = opt.soundUrl === undefined ? [] : [opt.soundUrl].flat();
-  const sound: FlipSound | null = sounds.length > 0 ? createFlipSound(sounds, opt.soundVolume) : null;
-
-  // The engine fires "flip" whenever it re-shows the spread, which includes every
-  // relayout: entering fullscreen, leaving it, a resize. Only a change of page is
-  // a page turn, and only a page turn should be heard.
-  let shown = 0;
-
-  flip.on("flip", (e) => {
-    const index = Number((e as { data: number }).data);
-    const turned = index !== shown;
-    shown = index;
-
-    ensureWindow(index);
-    announce(index);
-
-    if (turned) sound?.play();
-  });
-  flip.on("changeOrientation", () => relayout());
-  flip.on("changeState", (e) => {
-    settled = (e as { data: string }).data === "read";
-    if (settled && pendingLayout) relayout();
-  });
 
   ensureWindow(0);
 
@@ -562,7 +640,7 @@ export function createFlipview(
     next: () => flip.flipNext(),
     prev: () => flip.flipPrev(),
     first: () => handle.goTo(0),
-    last: () => handle.goTo(source.pageCount - 1),
+    last: () => handle.goTo(pageCount - 1),
     togglePanel() {
       panel?.toggle();
       panel?.mark(spread(flip.getCurrentPageIndex()));
@@ -617,7 +695,9 @@ export function createFlipview(
       if (document.fullscreenElement === root) void document.exitFullscreen();
       else void root.requestFullscreen?.();
     },
-    pageCount: source.pageCount,
+    get pageCount() {
+      return pageCount;
+    },
     currentPage: () => flip.getCurrentPageIndex(),
     orientation: () => flip.getOrientation(),
     setHotspots(next) {
@@ -660,7 +740,9 @@ export function createFlipview(
   const panel: PanelHandle | null = opt.panel
     ? createPanel({
         goTo: (index) => handle.goTo(index),
-        pageCount: source.pageCount,
+        get pageCount() {
+          return pageCount;
+        },
         async preview(index, width) {
           // A source whose pages are documents may have no picture of one. The
           // panel shows the page number alone rather than an empty box.
@@ -730,12 +812,12 @@ export function createFlipview(
 
   if (linked != null) {
     void pageFor(linked).then((index) => {
-      if (index !== null && index > 0 && index < source.pageCount) handle.goTo(index);
+      if (index !== null && index > 0 && index < pageCount) handle.goTo(index);
     });
   }
 
   options.onReady?.(handle);
-  emit("ready", { pages: source.pageCount, kind: source.kind });
+  emit("ready", { pages: pageCount, kind: source.kind });
   return handle;
 }
 

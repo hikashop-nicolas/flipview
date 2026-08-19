@@ -17,9 +17,14 @@ export interface ZoomHandle {
 const DEFAULTS = { min: 1, max: 4, step: 0.5 } as const;
 
 /**
- * Scales `target` inside `stage`. While zoomed, pointer drags pan instead of
- * flipping: the handlers run in the capture phase and stop propagation, so the
- * flip engine never sees them and the two gestures cannot fight.
+ * Scales `target` inside `stage`. While zoomed, a drag pans instead of flipping.
+ *
+ * Panning is done with pointer events and the flip engine listens for mouse and
+ * touch events, which are a separate stream: stopping a pointerdown does nothing
+ * to the mousedown that follows it. So while the book is zoomed, the engine's own
+ * input is stopped at the stage before it can start a page turn. Without that a
+ * reader dragging to see a corner of a page is dragging the page off the book at
+ * the same time, and it feels like a fight because it is one.
  */
 export function createZoom(
   stage: HTMLElement,
@@ -92,6 +97,9 @@ export function createZoom(
     stage.setPointerCapture(e.pointerId);
     stage.classList.add("fv-panning");
     e.stopPropagation();
+    // Dragging to see a corner of a page should not also drag a selection across
+    // the text on it.
+    if (e.cancelable) e.preventDefault();
   }
 
   function onPointerMove(e: PointerEvent): void {
@@ -132,7 +140,21 @@ export function createZoom(
     return Math.hypot(a.x - b.x, a.y - b.y);
   }
 
+  /**
+   * The engine's own listeners are mousedown on the book and touchstart on it,
+   * with the moves on window. Stopping the start is enough: no drag begins, so
+   * nothing has to be undone half way through one.
+   */
+  function blockEngine(e: Event): void {
+    if (scale === 1) return;
+
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+  }
+
   stage.addEventListener("wheel", onWheel, { passive: false });
+  stage.addEventListener("mousedown", blockEngine, true);
+  stage.addEventListener("touchstart", blockEngine, true);
   stage.addEventListener("pointerdown", onPointerDown, true);
   stage.addEventListener("pointermove", onPointerMove, true);
   stage.addEventListener("pointerup", onPointerUp, true);
@@ -147,6 +169,8 @@ export function createZoom(
     refresh: apply,
     destroy() {
       stage.removeEventListener("wheel", onWheel);
+      stage.removeEventListener("mousedown", blockEngine, true);
+      stage.removeEventListener("touchstart", blockEngine, true);
       stage.removeEventListener("pointerdown", onPointerDown, true);
       stage.removeEventListener("pointermove", onPointerMove, true);
       stage.removeEventListener("pointerup", onPointerUp, true);

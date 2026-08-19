@@ -55,6 +55,15 @@ export interface PageSource {
   locate?(index: number): string | null;
   /** Which page a locator is on now, or null when it cannot be found. */
   find?(locator: string): Promise<number | null>;
+  /**
+   * Lay the document out for a page this size, and report how many pages that
+   * makes. A document that reflows has no pages until it is told how big one is.
+   *
+   * The viewer calls this whenever the book is sized, and rebuilds itself when the
+   * count comes back different, putting the reader back where they were through
+   * `locate` and `find`.
+   */
+  layout?(box: { width: number; height: number }): Promise<number>;
   destroy(): void;
 }
 
