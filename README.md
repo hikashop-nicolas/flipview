@@ -60,6 +60,13 @@ usually JPEG 2000 or JBIG2, and pdf.js decodes both in wasm it fetches at render
 time; without it those pages come out blank white, with nothing logged. Copy
 `pdfjs-dist/wasm/` next to your worker and point at the folder.
 
+## Formats
+
+PDF and folders of images today. The viewer knows nothing about either: everything
+format-specific lives in `src/sources` behind one contract, and a layering check in
+`npm test` keeps it there. [FORMATS.md](FORMATS.md) is the design, including the path
+to EPUB, fixed-layout first and reflowable after.
+
 ## Options
 
 | Option | Default | Meaning |

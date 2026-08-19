@@ -1,6 +1,7 @@
 // flipview: a standalone, framework-agnostic page-flip book viewer.
 //
-// - source.ts   page sources (PDF via pdf.js, or a list of images)
+// - source.ts   what a document has to do to become a book: the format contract
+// - sources/    one file per format, reached only through that contract
 // - viewer.ts   the book itself: shells, lazy rendering, flip engine
 // - toolbar.ts  the optional control bar
 // - zoom.ts     scale and pan, and the gesture split with the flip engine
@@ -15,12 +16,9 @@ export {
   type FlipviewHandle,
   type FlipviewEventName,
 } from "./viewer";
-export {
-  createPdfSource,
-  createImageSource,
-  type PageSource,
-  type PdfSourceOptions,
-} from "./source";
+export { type PageSource, type OutlineEntry } from "./source";
+export { createPdfSource, type PdfSourceOptions } from "./sources/pdf";
+export { createImageSource } from "./sources/images";
 export { type ToolbarButtons, type ToolbarTarget } from "./toolbar";
 export { type ZoomOptions, type ZoomHandle } from "./zoom";
 export { createDeepLink, type DeepLink } from "./deeplink";
