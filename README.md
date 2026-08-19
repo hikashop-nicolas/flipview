@@ -1,14 +1,16 @@
 # flipview
 
-**[▶ Live demo](https://hikashop-nicolas.github.io/flipview/)** — open a PDF and turn its pages.
+**[▶ Live demo](https://hikashop-nicolas.github.io/flipview/)** — open a PDF, an EPUB or your own
+folder of pages, and turn them.
 
 A standalone, framework-agnostic, client-side **page-flip book viewer**. It turns a
-**PDF** or a **list of images** into a book with real turning pages, in the browser.
-No server, no upload, no account.
+**PDF**, an **EPUB**, a **folder of images** or a **folder of HTML pages** into a book
+with real turning pages, in the browser. No server, no upload, no account.
 
-**Status: early.** The rendering pipeline, lazy page loading and the single/double
-page layout work. The toolbar, zoom, search, outline and accessibility passes are
-not written yet.
+Everything a reader is offered is here: a toolbar, zoom and pan, full-text search, the
+document's own table of contents and thumbnails in a side panel, deep links, a
+lightbox, page-turn sounds, right-to-left binding, hotspots, and a text layer that
+makes a book selectable, findable and readable aloud.
 
 ```ts
 import { createFlipview, createPdfSource } from "flipview";
@@ -39,9 +41,6 @@ const light = openLightbox(createPdfSource({ url: "/catalogue.pdf", workerSrc })
 - **pdf.js** renders each page to a canvas, on demand. Only a small window of pages
   around the current one is ever painted, and a small LRU drops the rest, so a
   300-page PDF costs about the same memory as a 10-page one.
-The library ships no audio. Give it `soundUrl` and it plays yours, picking between
-several at random; give it none and pages turn silently.
-
 - **StPageFlip** (MIT) drives the fold geometry and the drag interaction. It is
   vendored in `src/engine` rather than depended on, because upstream stopped in
   January 2024. Our patches to it are ordinary commits: `git log src/engine`.
@@ -50,10 +49,12 @@ several at random; give it none and pages turn silently.
   and a screen reader gets nothing at all.
 - Pages are plain DOM elements, so anything can be laid over a page later: links
   and hotspots.
+- The library ships no audio. Give it `soundUrl` and it plays yours, picking between
+  several at random; give it none and pages turn silently.
 
-`pdfjs-dist` is an **optional peer dependency**. Install it only if you load PDFs,
-and pass `workerSrc` so the host app keeps control of its own asset pipeline. Image
-sources need nothing.
+`pdfjs-dist` and `fflate` are **optional peer dependencies**: the first only if you
+load PDFs, the second only if you load EPUBs. Pass `workerSrc` so the host app keeps
+control of its own asset pipeline. Images and HTML pages need nothing at all.
 
 Pass `wasmUrl` as well if your readers might open a **scanned** document. Scans are
 usually JPEG 2000 or JBIG2, and pdf.js decodes both in wasm it fetches at render
@@ -62,10 +63,30 @@ time; without it those pages come out blank white, with nothing logged. Copy
 
 ## Formats
 
-PDF, EPUB, folders of images and folders of HTML pages. The viewer knows nothing about either: everything
-format-specific lives in `src/sources` behind one contract, and a layering check in
-`npm test` keeps it there. [FORMATS.md](FORMATS.md) is the design, including the path
-to EPUB, fixed-layout first and reflowable after.
+PDF, EPUB, a folder of images, a folder of HTML pages. The viewer knows nothing about
+any of them: everything format-specific lives in `src/sources` behind one contract,
+and a layering check in `npm test` keeps it there. [FORMATS.md](FORMATS.md) is the
+design, and what each format costs to support.
+
+```ts
+import {
+  createEpubSource,
+  createHtmlSource,
+  createImageSource,
+  createPdfSource,
+} from "flipview";
+
+await createPdfSource({ url: "/catalogue.pdf", workerSrc });     // needs pdfjs-dist
+await createEpubSource({ url: "/book.epub" });                   // needs fflate
+await createImageSource(["/p1.jpg", "/p2.jpg", "/p3.jpg"]);      // needs nothing
+await createHtmlSource(["/pages/01.html", "/pages/02.html"]);    // needs nothing
+```
+
+An EPUB can be **fixed-layout**, whose pages were drawn at a size, or **reflowable**,
+which is text until it knows how big a page is: the book says which it is and the
+source picks the machinery. A reflowable book has no fixed page count, so its pages
+are named by where they fall in a section rather than by a number, and a resize
+paginates it again.
 
 ## Options
 
@@ -76,7 +97,7 @@ to EPUB, fixed-layout first and reflowable after.
 | `flippingTime` | `700` | flip animation duration in ms |
 | `cacheSize` | `8` | how many rendered page canvases to keep |
 | `maxHeight` | none | cap the book's height in px. Ignored in fullscreen and in a lightbox |
-| `showCover` | `false` | stand page 1 alone as a cover instead of pairing it |
+| `showCover` | `true` | stand page 1 alone as a cover instead of pairing it |
 | `hardCovers` | `false` | make the covers rigid rather than bending |
 | `pageCorners` | `true` | lift the page corner under the pointer |
 | `deepLink` | `false` | track the page in the URL hash, `true` uses `#page=N`, a string names the parameter |
@@ -94,6 +115,9 @@ to EPUB, fixed-layout first and reflowable after.
 | `hotspots` | none | clickable regions over the pages, in fractions of a page |
 | `onHotspot` | none | called when one is used, return `false` to handle it yourself |
 | `onEvent` | none | everything a reader does, in one place, for counting |
+| `onReady` | none | called with the handle once the book is up |
+| `onPageChange` | none | called with the page index on every turn |
+| `onError` | none | called when a page fails to paint. The book keeps going |
 
 ## Hotspots
 
@@ -166,7 +190,8 @@ to stop one.
 
 ```sh
 npm install
-npm test             # unit tests for the geometry helpers
+npm test             # unit tests, and the layering check that keeps formats out of the viewer
+npm run typecheck    # strict, no emit
 npm run dev          # demo on localhost:5173
 npm run build        # library to dist/
 npm run build:demo   # demo to demo-dist/ for GitHub Pages
