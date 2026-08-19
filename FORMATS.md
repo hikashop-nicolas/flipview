@@ -15,8 +15,8 @@ src/viewer.ts     the book: shells, layout, the flip engine. Format-blind.
 appears outside `src/sources`. The drift is gradual and every single import looks
 reasonable on its own, so it is checked rather than trusted.
 
-Today: **PDF** (pdf.js), **images** (a folder of pictures), and **EPUB**, both
-fixed-layout and reflowable. What follows was written before the EPUB work and is
+Today: **PDF** (pdf.js), **images** (a folder of pictures), **EPUB** (fixed-layout
+and reflowable), and **HTML pages** (a folder of files the site already serves). What follows was written before the EPUB work and is
 kept as the record of it: each step says what it added and what it cost.
 
 ## What a format needs from the contract
@@ -139,6 +139,17 @@ Three things this cost that are worth knowing before doing it again:
   page shape from the box it is offered will repaginate for ever, a few pages
   different every time. The page shape is the source's to state, and a re-layout for
   a page size within a pixel or two of the last one is not a re-layout.
+
+## HTML pages
+
+The fourth format is the one that needed no machinery: a folder of HTML files, one
+per page, shown in an iframe with a `src`. There is no archive to unpack and nothing
+to rewrite, because the site is already serving the pages and every relative
+reference resolves the way it always would. A page may state its own size with a
+viewport meta, exactly as a fixed-layout EPUB page does.
+
+It exists because of what step 1 built. Before `mount`, a page had to be a picture,
+and a book of web pages would have meant rasterising them.
 
 ## Adding some other format
 

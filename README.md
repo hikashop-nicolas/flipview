@@ -62,7 +62,7 @@ time; without it those pages come out blank white, with nothing logged. Copy
 
 ## Formats
 
-PDF and folders of images today. The viewer knows nothing about either: everything
+PDF, EPUB, folders of images and folders of HTML pages. The viewer knows nothing about either: everything
 format-specific lives in `src/sources` behind one contract, and a layering check in
 `npm test` keeps it there. [FORMATS.md](FORMATS.md) is the design, including the path
 to EPUB, fixed-layout first and reflowable after.
