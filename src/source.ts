@@ -34,6 +34,16 @@ export interface PdfSourceOptions {
   data?: ArrayBuffer | Uint8Array;
   /** URL of the pdf.js worker. Required, since the host app owns its asset pipeline. */
   workerSrc?: string;
+  /**
+   * Folder holding pdf.js's wasm decoders, from `pdfjs-dist/wasm/`.
+   *
+   * Scanned documents are usually JPEG 2000 or JBIG2, and pdf.js decodes both in
+   * wasm that it fetches at render time. Without this a scan renders as blank
+   * white pages, with nothing logged: the pages are there, the pictures are not.
+   */
+  wasmUrl?: string;
+  /** Folder holding pdf.js's character maps, for documents with CJK text. */
+  cMapUrl?: string;
 }
 
 /** Loads a PDF through pdf.js. pdfjs-dist is an optional peer dep, so it is imported lazily. */
@@ -41,9 +51,20 @@ export async function createPdfSource(opts: PdfSourceOptions): Promise<PageSourc
   const pdfjs = await import("pdfjs-dist");
   if (opts.workerSrc) pdfjs.GlobalWorkerOptions.workerSrc = opts.workerSrc;
 
-  const doc = await pdfjs.getDocument(
-    opts.data ? { data: opts.data } : { url: opts.url! },
-  ).promise;
+  // pdf.js insists these end in a slash and throws "Invalid factory url" if they
+  // do not, which kills the whole document rather than one picture in it. A host
+  // naming a folder should not have to know that.
+  const folder = (url: string | undefined): string | undefined =>
+    url === undefined ? undefined : url.endsWith("/") ? url : `${url}/`;
+
+  const wasmUrl = folder(opts.wasmUrl);
+  const cMapUrl = folder(opts.cMapUrl);
+
+  const doc = await pdfjs.getDocument({
+    ...(opts.data ? { data: opts.data } : { url: opts.url! }),
+    ...(wasmUrl ? { wasmUrl } : {}),
+    ...(cMapUrl ? { cMapUrl, cMapPacked: true } : {}),
+  }).promise;
 
   const first = await doc.getPage(1);
   const vp = first.getViewport({ scale: 1 });

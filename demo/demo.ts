@@ -1,4 +1,7 @@
 import workerSrc from "pdfjs-dist/build/pdf.worker.mjs?url";
+// Scanned documents are JPEG 2000 or JBIG2, which pdf.js decodes in wasm it fetches
+// at render time. Without this they render as blank white pages.
+const wasmUrl = new URL("../node_modules/pdfjs-dist/wasm/", import.meta.url).href;
 import "../src/engine/Style/stPageFlip.css";
 import "../src/flipview.css";
 import { createFlipview, createPdfSource, createImageSource, openLightbox } from "../src/index";
@@ -97,7 +100,7 @@ document.getElementById("file")!.addEventListener("change", (e) => {
   const files = Array.from((e.target as HTMLInputElement).files ?? []);
   if (!files.length) return;
   if (files[0].type === "application/pdf") {
-    void open(async () => createPdfSource({ data: await files[0].arrayBuffer(), workerSrc }));
+    void open(async () => createPdfSource({ data: await files[0].arrayBuffer(), workerSrc, wasmUrl }));
   } else {
     const urls = files.map((f) => URL.createObjectURL(f));
     void open(() => createImageSource(urls));
@@ -106,5 +109,10 @@ document.getElementById("file")!.addEventListener("change", (e) => {
 
 // Sample document so the demo shows something on load. ?doc=outline opens the
 // small one that has a table of contents, which is what fills the contents tab.
-const doc = wanted.get("doc") === "outline" ? "./outline.pdf" : "./sample.pdf";
-void open(() => createPdfSource({ url: doc, workerSrc }));
+const doc =
+  wanted.get("doc") === "outline"
+    ? "./outline.pdf"
+    : wanted.get("doc") === "scan"
+      ? "./scan.pdf"
+      : "./sample.pdf";
+void open(() => createPdfSource({ url: doc, workerSrc, wasmUrl }));

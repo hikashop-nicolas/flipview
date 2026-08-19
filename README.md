@@ -55,6 +55,11 @@ several at random; give it none and pages turn silently.
 and pass `workerSrc` so the host app keeps control of its own asset pipeline. Image
 sources need nothing.
 
+Pass `wasmUrl` as well if your readers might open a **scanned** document. Scans are
+usually JPEG 2000 or JBIG2, and pdf.js decodes both in wasm it fetches at render
+time; without it those pages come out blank white, with nothing logged. Copy
+`pdfjs-dist/wasm/` next to your worker and point at the folder.
+
 ## Options
 
 | Option | Default | Meaning |
