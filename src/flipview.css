@@ -22,6 +22,27 @@
   outline: none;
 }
 
+/* A page that is a document rather than a picture: an EPUB page is XHTML, and it
+   is shown as itself. */
+.fv-page-mount {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.fv-page-mount img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.fv-page-frame {
+  display: block;
+  border: 0;
+  background: transparent;
+}
+
 /* --- contents and pages --- */
 .fv-panel[hidden] {
   /* display beats the hidden attribute, so it has to be said out loud. */

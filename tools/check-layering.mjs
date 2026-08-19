@@ -33,7 +33,14 @@ async function walk(dir) {
 for (const file of await walk(src)) {
   const name = relative(root, file);
   // src/sources is where formats are allowed to exist, and the engine is vendored.
-  if (name.startsWith("src/sources/") || name.startsWith("src/engine/")) continue;
+  // index.ts is the door: naming every entry point is the one thing it is for.
+  if (
+    name.startsWith("src/sources/") ||
+    name.startsWith("src/engine/") ||
+    name === "src/index.ts"
+  ) {
+    continue;
+  }
 
   const body = await readFile(file, "utf8");
 

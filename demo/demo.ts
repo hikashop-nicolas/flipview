@@ -4,7 +4,13 @@ import workerSrc from "pdfjs-dist/build/pdf.worker.mjs?url";
 const wasmUrl = new URL("../node_modules/pdfjs-dist/wasm/", import.meta.url).href;
 import "../src/engine/Style/stPageFlip.css";
 import "../src/flipview.css";
-import { createFlipview, createPdfSource, createImageSource, openLightbox } from "../src/index";
+import {
+  createEpubSource,
+  createFlipview,
+  createImageSource,
+  createPdfSource,
+  openLightbox,
+} from "../src/index";
 import type { FlipviewHandle, PageSource } from "../src/index";
 
 // Query parameters drive the demo as well as the checkboxes, so a state can be
@@ -99,7 +105,9 @@ document.getElementById("light")!.addEventListener("click", () => {
 document.getElementById("file")!.addEventListener("change", (e) => {
   const files = Array.from((e.target as HTMLInputElement).files ?? []);
   if (!files.length) return;
-  if (files[0].type === "application/pdf") {
+  if (files[0].name.toLowerCase().endsWith(".epub")) {
+    void open(async () => createEpubSource({ data: await files[0].arrayBuffer() }));
+  } else if (files[0].type === "application/pdf") {
     void open(async () => createPdfSource({ data: await files[0].arrayBuffer(), workerSrc, wasmUrl }));
   } else {
     const urls = files.map((f) => URL.createObjectURL(f));
@@ -109,10 +117,15 @@ document.getElementById("file")!.addEventListener("change", (e) => {
 
 // Sample document so the demo shows something on load. ?doc=outline opens the
 // small one that has a table of contents, which is what fills the contents tab.
-const doc =
-  wanted.get("doc") === "outline"
-    ? "./outline.pdf"
-    : wanted.get("doc") === "scan"
-      ? "./scan.pdf"
-      : "./sample.pdf";
-void open(() => createPdfSource({ url: doc, workerSrc, wasmUrl }));
+if (wanted.get("doc") === "epub") {
+  void open(() => createEpubSource({ url: "./fixed.epub" }));
+} else {
+  const doc =
+    wanted.get("doc") === "outline"
+      ? "./outline.pdf"
+      : wanted.get("doc") === "scan"
+        ? "./scan.pdf"
+        : "./sample.pdf";
+
+  void open(() => createPdfSource({ url: doc, workerSrc, wasmUrl }));
+}

@@ -264,9 +264,25 @@ export function createFlipview(
     const width = renderWidth;
     try {
       const inner = shells[index].querySelector<HTMLElement>(".fv-page-inner")!;
+
+      // A page that is a document rather than a picture is put in as it is. It
+      // carries its own text, so there is no text layer to lay over it, and no
+      // picture to put on the back of the fold.
+      if (source.mount) {
+        drop(index);
+        await source.mount(index, inner, width);
+
+        if (width !== renderWidth) return;
+
+        shells[index].classList.add("fv-rendered", "fv-page-mounted");
+        rendered.push(index);
+        evict();
+        return;
+      }
+
       const canvas = document.createElement("canvas");
       canvas.className = "fv-page-canvas";
-      await source.render(index, canvas, width);
+      await source.render!(index, canvas, width);
       // A resize during the render would have made this canvas the wrong size.
       if (width !== renderWidth) return;
 
@@ -309,6 +325,7 @@ export function createFlipview(
 
   function drop(index: number): void {
     shells[index].querySelector(".fv-page-canvas")?.remove();
+    shells[index].querySelector(".fv-page-mount")?.remove();
     const inner = shells[index].querySelector<HTMLElement>(".fv-page-inner");
     if (inner) inner.style.backgroundImage = "";
     shells[index].classList.remove("fv-rendered");
@@ -625,6 +642,10 @@ export function createFlipview(
         goTo: (index) => handle.goTo(index),
         pageCount: source.pageCount,
         async preview(index, width) {
+          // A source whose pages are documents may have no picture of one. The
+          // panel shows the page number alone rather than an empty box.
+          if (!source.render) return null;
+
           const canvas = document.createElement("canvas");
           await source.render(index, canvas, width);
 
@@ -691,7 +712,7 @@ export function createFlipview(
   if (linked != null && linked > 0 && linked < source.pageCount) handle.goTo(linked);
 
   options.onReady?.(handle);
-  emit("ready", { pages: source.pageCount, kind: source.text ? "text" : "images" });
+  emit("ready", { pages: source.pageCount, kind: source.kind });
   return handle;
 }
 

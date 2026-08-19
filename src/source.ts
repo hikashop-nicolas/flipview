@@ -16,8 +16,19 @@ export interface PageSource {
   readonly pageCount: number;
   /** Aspect ratio (width / height) of a page, used to size the book. */
   readonly aspect: number;
-  /** Paint page `index` (0-based) into `canvas` at roughly `cssWidth` CSS pixels wide. */
-  render(index: number, canvas: HTMLCanvasElement, cssWidth: number): Promise<void>;
+  /**
+   * Paint page `index` (0-based) into `canvas` at roughly `cssWidth` CSS pixels
+   * wide. For documents whose pages are pictures.
+   *
+   * A source offers this, or `mount`, or both. Where both exist the viewer shows
+   * the mounted page and uses this for thumbnails.
+   */
+  render?(index: number, canvas: HTMLCanvasElement, cssWidth: number): Promise<void>;
+  /**
+   * Put page `index` into `host` as live DOM, sized to `cssWidth`. For documents
+   * whose pages are documents: an EPUB page is XHTML, not a picture of one.
+   */
+  mount?(index: number, host: HTMLElement, cssWidth: number): Promise<void>;
   /**
    * Lay the page's text over `container`, sized to `cssWidth`.
    *
