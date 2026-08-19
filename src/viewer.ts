@@ -458,9 +458,13 @@ export function createFlipview(
     // little more on every pass until it settles far too small. The container's
     // top is fixed by the page above it, and a filling element has a height of its
     // own, so both are stable to measure against.
-    const room = filling
-      ? filling.clientHeight - chrome
-      : window.innerHeight - Math.max(container.getBoundingClientRect().top, 0) - chrome;
+    // How far down the window the book starts, counting only what a reader will
+    // still be looking past once they have scrolled to it. A book placed below
+    // the fold otherwise sizes itself to the sliver left at the bottom of the
+    // window and comes out a stamp.
+    const top = Math.max(0, Math.min(container.getBoundingClientRect().top, window.innerHeight * 0.35));
+
+    const room = filling ? filling.clientHeight - chrome : window.innerHeight - top - chrome;
 
     // The cap exists to fit a book into a page's layout. Filling the screen is
     // the one moment it should not apply.
