@@ -21,6 +21,8 @@ window.setInterval(() => {
   diag.textContent = `pages painted ${document.querySelectorAll(".fv-rendered").length}, text layers ${layers}, spans ${words}`;
 }, 700);
 const status = document.getElementById("status")!;
+const events = document.getElementById("events")!;
+const seen: string[] = [];
 const cover = document.getElementById("cover") as HTMLInputElement;
 cover.checked = asked("cover", true);
 const hard = document.getElementById("hard") as HTMLInputElement;
@@ -65,6 +67,10 @@ async function open(next?: () => Promise<PageSource>, startAt = 0) {
       if (!spot.data?.product) return;
       status.textContent = `hotspot: product ${spot.data.product}`;
       return false;
+    },
+    onEvent: (name, detail) => {
+      seen.push(name);
+      events.textContent = `${seen.length} events, last: ${name} ${JSON.stringify(detail)}`.slice(0, 160);
     },
     onError: (err, i) => (status.textContent = `page ${i + 1}: ${String(err)}`.slice(0, 120)),
     onPageChange: (i) => (status.textContent = `page ${i + 1} / ${source.pageCount}`),

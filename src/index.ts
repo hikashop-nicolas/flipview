@@ -9,7 +9,12 @@
 // - sound.ts    the page-turn recordings
 // - search.ts   finding words, and marking them on a page
 // - i18n.ts     every user-visible string
-export { createFlipview, type FlipviewOptions, type FlipviewHandle } from "./viewer";
+export {
+  createFlipview,
+  type FlipviewOptions,
+  type FlipviewHandle,
+  type FlipviewEventName,
+} from "./viewer";
 export {
   createPdfSource,
   createImageSource,

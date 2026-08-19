@@ -81,6 +81,7 @@ sources need nothing.
 | `panel` | `true` | offer a side panel with the document's contents and its pages |
 | `hotspots` | none | clickable regions over the pages, in fractions of a page |
 | `onHotspot` | none | called when one is used, return `false` to handle it yourself |
+| `onEvent` | none | everything a reader does, in one place, for counting |
 
 ## Hotspots
 
@@ -108,6 +109,33 @@ Each one is a real link or a real button, named for a screen reader by its `labe
 so it is reachable by keyboard and can be opened in a new tab. They are invisible
 until hovered or focused; add `fv-hotspots-shown` to the root to show them all, which
 is what a shoppable catalogue usually wants.
+
+## Counting what readers do
+
+`onEvent` reports what happened, so a host can send it wherever it sends the rest of
+its analytics. The viewer never talks to a network itself.
+
+```js
+createFlipview(el, source, {
+  onEvent(name, detail) {
+    window.dataLayer?.push({ event: `flipbook_${name}`, ...detail });
+  },
+});
+```
+
+| Event | Detail |
+|---|---|
+| `ready` | `pages`, `kind` |
+| `page` | `page` (1-based), `pages` |
+| `search` | `query`, `hits` |
+| `hotspot` | `page`, `label`, `href`, `data` |
+| `zoom` | `scale`, on every change: debounce it before sending |
+| `fullscreen` | `on` |
+| `download` | `url` |
+| `share` | `url`, `copied` |
+
+A handler that throws is caught and logged: counting a page turn should never be able
+to stop one.
 
 ## Development
 

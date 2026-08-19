@@ -13,6 +13,7 @@
   header label.opt { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; }
   #status { margin-left: auto; font-size: 13px; }
   #diag { margin-left: auto; font-size: 13px; }
+  #events { font-size: 13px; }
   #stage { padding: 20px 16px; }
   input[type=file] { display: none; }
 </style>
@@ -30,6 +31,7 @@
   <label class="opt"><input id="slow" type="checkbox" /> Slow flip</label>
   <label class="opt"><input id="hotspots" type="checkbox" /> Hotspots</label>
   <span id="diag"></span>
+  <span id="events"></span>
   <span id="status">loading...</span>
 </header>
 <div id="stage"></div>

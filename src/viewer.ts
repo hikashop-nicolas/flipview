@@ -65,9 +65,24 @@ export interface FlipviewOptions {
   onHotspot?: (hotspot: Hotspot, event: MouseEvent) => boolean | void;
   onReady?: (handle: FlipviewHandle) => void;
   onPageChange?: (index: number) => void;
+  /**
+   * Everything a reader does, in one place, so a host can count it: "ready",
+   * "page", "search", "hotspot", "zoom", "fullscreen", "download", "share".
+   */
+  onEvent?: (name: FlipviewEventName, detail: Record<string, unknown>) => void;
   /** Called when a page fails to paint. The viewer keeps going. */
   onError?: (error: unknown, index: number) => void;
 }
+
+export type FlipviewEventName =
+  | "ready"
+  | "page"
+  | "search"
+  | "hotspot"
+  | "zoom"
+  | "fullscreen"
+  | "download"
+  | "share";
 
 export interface FlipviewHandle {
   goTo(index: number): void;
@@ -186,7 +201,13 @@ export function createFlipview(
     renderHotspots(
       inner,
       hotspots.filter((spot) => spot.page === index),
-      { goTo: (i) => flip.flip(i), onUse: (spot, event) => options.onHotspot?.(spot, event) },
+      {
+        goTo: (i) => flip.flip(i),
+        onUse: (spot, event) => {
+          emit("hotspot", { page: spot.page + 1, label: spot.label, href: spot.href, data: spot.data });
+          return options.onHotspot?.(spot, event);
+        },
+      },
     );
   }
 
@@ -225,6 +246,7 @@ export function createFlipview(
   const zoom = opt.zoom
     ? createZoom(stage, book, opt.zoom === true ? {} : opt.zoom, (s) => {
         root.classList.toggle("fv-zoomed", s > 1);
+        emit("zoom", { scale: s });
       })
     : null;
 
@@ -414,6 +436,19 @@ export function createFlipview(
     panel?.mark(index);
     link?.write(index);
     options.onPageChange?.(index);
+    emit("page", { page: index + 1, pages: source.pageCount });
+  }
+
+  /**
+   * A host that wants to count what readers do should not have to reach into the
+   * viewer for it, and should never be able to break it by throwing.
+   */
+  function emit(name: FlipviewEventName, detail: Record<string, unknown> = {}): void {
+    try {
+      options.onEvent?.(name, detail);
+    } catch (err) {
+      console.error("flipview: an onEvent handler threw", err);
+    }
   }
 
   const finder = createSearch(source);
@@ -482,6 +517,8 @@ export function createFlipview(
 
       for (const index of rendered) highlight(shells[index], finder.query());
 
+      emit("search", { query: finder.query(), hits: hits.length });
+
       if (finder.query().length < 2) return "";
       if (hits.length === 0) return t("searchNone");
 
@@ -497,6 +534,7 @@ export function createFlipview(
     },
     download() {
       if (!opt.downloadUrl) return;
+      emit("download", { url: opt.downloadUrl });
       const link = document.createElement("a");
       link.href = opt.downloadUrl;
       link.download = "";
@@ -509,8 +547,10 @@ export function createFlipview(
       link?.write(flip.getCurrentPageIndex());
       try {
         await navigator.clipboard.writeText(location.href);
+        emit("share", { url: location.href, copied: true });
         return true;
       } catch {
+        emit("share", { url: location.href, copied: false });
         return false;
       }
     },
@@ -592,8 +632,10 @@ export function createFlipview(
   bar?.update(0);
 
   function onFullscreen(): void {
-    root.classList.toggle("fv-fullscreen", document.fullscreenElement === root);
+    const on = document.fullscreenElement === root;
+    root.classList.toggle("fv-fullscreen", on);
     relayout();
+    emit("fullscreen", { on });
   }
   document.addEventListener("fullscreenchange", onFullscreen);
 
@@ -622,6 +664,7 @@ export function createFlipview(
   if (linked != null && linked > 0 && linked < source.pageCount) handle.goTo(linked);
 
   options.onReady?.(handle);
+  emit("ready", { pages: source.pageCount, kind: source.text ? "text" : "images" });
   return handle;
 }
 
