@@ -1,6 +1,6 @@
 // Films a page turn, frame by frame, with the DOM as it was in each frame.
 //
-//   node tools/film.mjs <url> [outPrefix] [turnsForward]
+//   node tools/film.mjs <url> [outPrefix] [turnsForward] [filmed: back|forward]
 //
 // A fold lasts under a second and a screenshot through a browser-automation tool
 // takes about as long, so the middle of an animation cannot be caught that way:
@@ -49,7 +49,7 @@ try {
   for (let n = 0; n < times; n++) { await click("Next page"); await wait(7000); }
   console.log("on spread:", await evaluate("document.querySelector('.fv-page-input')?.value ?? '?'"));
 
-  await click("Previous page");
+  await click(process.argv[5] === "forward" ? "Next page" : "Previous page");
 
   for (let n = 0; n < 9; n++) {
     const shot = await send("Page.captureScreenshot", { format: "png" });

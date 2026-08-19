@@ -202,7 +202,23 @@ export abstract class PageCollection {
                     ? this.getSpread()[current + 1]
                     : this.getSpread()[current - 1];
 
-            if (spread.length === 1) return this.pages[spread[0]];
+            // Ours: turning onto a cover, or onto a last page standing alone,
+            // there is no page waiting underneath to be uncovered: that half of
+            // the book is closing. What belongs there is the page being left
+            // behind, wiped away as the sheet sweeps over it, so it goes here
+            // rather than lying flat and reappearing behind the fold. Upstream
+            // handed back the turning sheet itself, which drew nothing.
+            if (spread.length === 1) {
+                const here = this.getSpread()[current];
+
+                if (here.length === 2) {
+                    return direction === FlipDirection.FORWARD
+                        ? this.pages[here[1]]
+                        : this.pages[here[0]];
+                }
+
+                return this.pages[spread[0]];
+            }
 
             return direction === FlipDirection.FORWARD
                 ? this.pages[spread[1]]
@@ -275,22 +291,18 @@ export abstract class PageCollection {
 
     /**
      * Ours: whether turning this way lands on a spread holding one page, which
-     * means one half of the book is about to be empty.
-     *
-     * That happens at a cover and at a last page standing alone. Upstream made
-     * both rigid, and the rigid path rotates the page beside them out of the way;
-     * a soft one leaves it lying there through the whole fold and then blinks it
-     * out, which is what this exists to let the render avoid.
+     * is a book closing on that side rather than an ordinary turn.
      */
     public landsAlone(direction: FlipDirection): boolean {
         if (this.render.getOrientation() !== Orientation.LANDSCAPE) return false;
 
+        const here = this.getSpread()[this.currentSpreadIndex];
         const target =
             direction === FlipDirection.FORWARD
                 ? this.getSpread()[this.currentSpreadIndex + 1]
                 : this.getSpread()[this.currentSpreadIndex - 1];
 
-        return target !== undefined && target.length === 1;
+        return target !== undefined && target.length === 1 && here.length === 2;
     }
 
     /**

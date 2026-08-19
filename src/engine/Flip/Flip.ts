@@ -159,12 +159,15 @@ export class Flip {
                 }
             }
 
-            // Ours: when the turn lands on a cover or on a last page standing
-            // alone, the other half of the book is about to be empty, and the
-            // page sitting there is the underside of the sheet now turning.
-            // Drawn flat it stays put through the whole fold and then blinks
-            // out. The rigid path rotates it away; a soft one has to drop it.
-            if (this.app.getPageCollection().landsAlone(direction)) {
+            // Ours: when a soft turn lands on a cover or on a last page standing
+            // alone, the page on the side being emptied is drawn as the one
+            // under the sheet, shrinking as the sheet sweeps over it, so it must
+            // not also lie there flat. The rigid path rotates it instead and is
+            // left alone.
+            if (
+                this.closingSoftly(direction) &&
+                this.flippingPage!.getDrawingDensity() === PageDensity.SOFT
+            ) {
                 if (direction === FlipDirection.BACK) {
                     this.render.setLeftPage(null);
                 } else {
@@ -186,6 +189,11 @@ export class Flip {
         }
     }
 
+    /** Ours: whether this turn closes one half of the book rather than turning it. */
+    private closingSoftly(direction: FlipDirection): boolean {
+        return this.app.getPageCollection().landsAlone(direction);
+    }
+
     /**
      * Perform calculations for the current page position. Pass data to render object
      *
@@ -198,7 +206,16 @@ export class Flip {
             // Perform calculations for a specific position
             const progress = this.calc.getFlippingProgress();
 
-            this.bottomPage!.setArea(this.calc.getBottomClipArea());
+            // Ours: closing onto a cover, the page under the sheet is the one
+            // being closed, and it is what has not been lifted yet rather than
+            // what has been uncovered. The two are the halves the fold line cuts.
+            const closing =
+                this.closingSoftly(this.calc.getDirection()) &&
+                this.flippingPage!.getDrawingDensity() === PageDensity.SOFT;
+
+            this.bottomPage!.setArea(
+                closing ? this.calc.getRestingClipArea() : this.calc.getBottomClipArea()
+            );
             this.bottomPage!.setPosition(this.calc.getBottomPagePosition());
             this.bottomPage!.setAngle(0);
             this.bottomPage!.setHardAngle(0);

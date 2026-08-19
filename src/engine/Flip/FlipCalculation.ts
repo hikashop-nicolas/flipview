@@ -132,6 +132,33 @@ export class FlipCalculation {
     }
 
     /**
+     * Ours: the part of the page being turned that is still lying flat.
+     *
+     * The fold line divides that page in two: what the sheet has already lifted,
+     * and what has not moved yet. Upstream never needed the second half, because
+     * the page underneath is what fills it. Closing a book onto its cover there
+     * is no page underneath, and what belongs there is the page being closed,
+     * shrinking as the sheet sweeps over it.
+     *
+     * @returns {Point[]} Polygon between the fold and the near edge
+     */
+    public getRestingClipArea(): (Point | null)[] {
+        const result: (Point | null)[] = [];
+
+        result.push({ x: 0, y: 0 });
+        result.push(this.topIntersectPoint);
+
+        if (this.sideIntersectPoint !== null) {
+            result.push(this.sideIntersectPoint);
+        }
+
+        result.push(this.bottomIntersectPoint);
+        result.push({ x: 0, y: this.pageHeight });
+
+        return result;
+    }
+
+    /**
      * Get page rotation angle
      */
     public getAngle(): number {
